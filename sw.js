@@ -1,5 +1,5 @@
 /* Evyrim service worker: oyun dosyalarını ve 3D motoru önbelleğe alır, internetsiz de açılır. */
-const CACHE = 'evyrim-9375bf7ff7';
+const CACHE = 'evyrim-02ed7e4ca2';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 const CDN = [
   "https://cdn.jsdelivr.net/npm/three@0.170.0/+esm",

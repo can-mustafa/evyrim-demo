@@ -150,6 +150,16 @@ kbd{font:600 11px/1 var(--head);letter-spacing:.06em;padding:3px 6px;border:1px 
 .card{background:var(--panel2);border:1px solid var(--line);padding:22px 24px;max-width:560px;width:100%;box-sizing:border-box;max-height:100%;overflow:auto}
 .card h2{font:800 34px/1 var(--display);margin:0 0 6px}
 .card .sub{color:var(--muted);margin:0 0 16px;font-size:15px}
+#fishing{background:rgba(4,7,11,.6)}
+#fishing .card{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;max-width:620px}
+#fishCanvas{display:block;max-width:100%}
+#fishing .info h2{font-size:28px}
+#fishing .info p{margin:0 0 10px;font-size:14.5px;line-height:1.45;color:#c9d4de}
+#fishMsg{min-height:22px;color:var(--gold);font-weight:500}
+#fishPull{width:100%;margin:6px 0 8px;background:rgba(111,216,201,.16);border-color:var(--rune);font-size:18px}
+@media (max-width:560px){#fishing .card{grid-template-columns:1fr;justify-items:center}}
+.obj.can-toggle{pointer-events:auto;cursor:pointer}
+#objOther{display:block;margin-top:3px;font-size:12px;color:var(--muted)}
 #lockpick{background:rgba(4,7,11,.72)}
 #lockpick .card{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;max-width:620px}
 #lpCanvas{touch-action:none;display:block}
@@ -212,13 +222,13 @@ kbd{font:600 11px/1 var(--head);letter-spacing:.06em;padding:3px 6px;border:1px 
       <div class="meter"><label>GÜÇ</label><div class="bar st" id="stBar"><i id="stFill"></i></div><b id="stNum">100</b></div>
       <button id="lvlBadge" hidden>Seviye atladın · seç</button>
     </div>
-    <div class="obj"><small id="objTitle">GÖREV · ATA RÜNÜ</small><b id="objText"></b><span id="objDist"></span><span id="bountyHud" hidden></span></div>
+    <div class="obj" id="objCard"><small id="objTitle">GÖREV · ATA RÜNÜ</small><b id="objText"></b><span id="objDist"></span><span id="objOther" hidden></span><span id="bountyHud" hidden></span></div>
     <div class="tr">
       <button class="ic" id="btnSound" aria-label="Sesi aç veya kapat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5v14l-4.5-4.5H4z"/><path id="sndWave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
       <button class="ic" id="btnMenu" aria-label="Menü"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
     </div>
     <div id="saved">KAYDEDİLDİ</div>
-    <div id="boss" hidden><span>Höyük Kralı</span><div class="bar"><i id="bossFill"></i></div></div>
+    <div id="boss" hidden><span id="bossName">Höyük Kralı</span><div class="bar"><i id="bossFill"></i></div></div>
     <div id="stealth" hidden data-s="0"><svg viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 10 Q20 -3 38 10 Q20 23 2 10Z"/><ellipse id="eyeOpen" cx="20" cy="10" rx="6" ry="1" fill="currentColor" stroke="none"/></svg><span id="stealthTxt">GİZLİ</span></div>
     <div id="prompt" hidden><kbd>E</kbd><span id="promptTxt"></span></div>
     <div id="toasts"></div>
@@ -264,6 +274,19 @@ kbd{font:600 11px/1 var(--head);letter-spacing:.06em;padding:3px 6px;border:1px 
 
   <div id="dialog" hidden><div class="who" id="dlgWho"></div><p id="dlgText"></p><div class="choices" id="dlgChoices"></div></div>
 
+  <div id="fishing" class="screen" hidden>
+    <div class="card">
+      <canvas id="fishCanvas" width="280" height="220"></canvas>
+      <div class="info">
+        <h2>Buz deliği</h2>
+        <p id="fishHelp">Olta suda. Şamandıra batınca hemen “Çek”e bas. Erken çekersen balık ürker.</p>
+        <p>Sepette: <b id="fishCount">0</b> balık</p>
+        <div id="fishMsg"></div>
+        <button class="btn" id="fishPull">Çek</button>
+        <button class="btn small" id="fishClose">Oltayı topla</button>
+      </div>
+    </div>
+  </div>
   <div id="lockpick" class="screen" hidden>
     <div class="card">
       <canvas id="lpCanvas" width="280" height="280"></canvas>
@@ -662,12 +685,24 @@ const T_HALF = 130, T_SEG = 130, T_STEP = (T_HALF * 2) / T_SEG, TN = T_SEG + 1;
 const BARROW = { x: 72, z: -72 };
 const RUIN = { x: -48, z: 38 };
 const PATH = [[3, -3], [28, -20], [50, -50], [65, -65]];
+/* Kuzgun Gölü bölgesi: köyün kuzeyinde donmuş göl, güney kıyıda balıkçı kampı, kuzey kıyıda trol ini */
+const LAKE = { x: -8, z: 70, rx: 20, rz: 14 };
+const CAMP = { x: 3, z: 49 };
+const LAIR = { x: -10, z: 87 };
+const CAVEHILL = { x: -10, z: 102 };
+const FISHHOLE = { x: -2, z: 59.5 };
+const PATH2 = [[-9, 21], [-13, 33], [-6, 42], [3, 47]];
+const PATHS = [PATH, PATH2];
+const lakeE = (x, z) => Math.hypot((x - LAKE.x) / LAKE.rx, (z - LAKE.z) / LAKE.rz);
+function reserved(x, z, pad = 0) {
+  return Math.hypot((x - LAKE.x) / (LAKE.rx + 4 + pad), (z - LAKE.z) / (LAKE.rz + 4 + pad)) < 1 || Math.hypot(x - CAMP.x, z - CAMP.z) < 9 + pad || Math.hypot(x - LAIR.x, z - LAIR.z) < 9 + pad;
+}
 function distSeg(px, pz, ax, az, bx2, bz) {
   const vx = bx2 - ax, vz = bz - az, wx = px - ax, wz = pz - az;
   const t = clamp((wx * vx + wz * vz) / (vx * vx + vz * vz), 0, 1);
   return Math.hypot(px - (ax + vx * t), pz - (az + vz * t));
 }
-function pathDist(x, z) { let m = 1e9; for (let i = 0; i < PATH.length - 1; i++) m = Math.min(m, distSeg(x, z, PATH[i][0], PATH[i][1], PATH[i + 1][0], PATH[i + 1][1])); return m; }
+function pathDist(x, z) { let m = 1e9; for (const Q of PATHS) for (let i = 0; i < Q.length - 1; i++) m = Math.min(m, distSeg(x, z, Q[i][0], Q[i][1], Q[i + 1][0], Q[i + 1][1])); return m; }
 function rawHeight(x, z) {
   let h = 2.2 * Math.sin(x * 0.045) * Math.cos(z * 0.05) + 1.4 * Math.sin((x + z) * 0.08 + 1.0)
     + 0.7 * Math.sin(x * 0.19 + 1.3) * Math.sin(z * 0.16 + 0.4) + 0.3 * Math.sin(x * 0.5) * Math.cos(z * 0.43);
@@ -675,6 +710,10 @@ function rawHeight(x, z) {
   h *= smooth(12, 26, Math.hypot(x - BARROW.x, z - BARROW.z));
   h *= smooth(6, 14, Math.hypot(x - RUIN.x, z - RUIN.z));
   h = lerp(h * 0.45, h, smooth(1.5, 7, pathDist(x, z)));
+  h += 7.5 * (1 - smooth(3, 13, Math.hypot(x - CAVEHILL.x, z - CAVEHILL.z)));
+  h *= smooth(4, 10, Math.hypot(x - CAMP.x, z - CAMP.z));
+  h *= smooth(4, 8, Math.hypot(x - LAIR.x, z - LAIR.z));
+  h = lerp(-1.0, h, smooth(0.9, 1.3, lakeE(x, z)));
   const d = Math.max(Math.abs(x), Math.abs(z)), m = smooth(86, 128, d);
   return h + m * m * 38 + m * 6 * Math.sin(x * 0.13) * Math.cos(z * 0.11);
 }
@@ -773,7 +812,7 @@ const HERB_SPOTS = [[-40, 30], [-55, 44], [-53, 31], [-42, 47], [15, -32], [-22,
   const r = mulberry32(42), A = [], B = [];
   for (let i = 0; i < 1400 && A.length + B.length < 360; i++) {
     const x = (r() * 2 - 1) * 120, z = (r() * 2 - 1) * 120;
-    if (Math.hypot(x, z) < 27 || Math.hypot(x - BARROW.x, z - BARROW.z) < 17 || pathDist(x, z) < 4.5 || Math.hypot(x - RUIN.x, z - RUIN.z) < 10) continue;
+    if (Math.hypot(x, z) < 27 || Math.hypot(x - BARROW.x, z - BARROW.z) < 17 || pathDist(x, z) < 4.5 || Math.hypot(x - RUIN.x, z - RUIN.z) < 10 || reserved(x, z)) continue;
     if (HERB_SPOTS.some((h) => Math.hypot(x - h[0], z - h[1]) < 2.5)) continue;
     const dens = 0.5 + 0.5 * Math.sin(x * 0.07 + 1) * Math.cos(z * 0.06 - 2);
     if (r() > dens * 0.85 + 0.2) continue;
@@ -794,7 +833,7 @@ const HERB_SPOTS = [[-40, 30], [-55, 44], [-53, 31], [-42, 47], [15, -32], [-22,
     for (let i = 0; i < n.count; i++) { const c = n.getY(i) > 0.5 ? S : R0; rc[i * 3] = c.r; rc[i * 3 + 1] = c.g; rc[i * 3 + 2] = c.b; } rockG.setAttribute('color', new THREE.BufferAttribute(rc, 3)); }
   for (let i = 0; i < 300 && rocks.length < 55; i++) {
     const x = (r() * 2 - 1) * 110, z = (r() * 2 - 1) * 110;
-    if (Math.hypot(x, z) < 24 || pathDist(x, z) < 3.5 || Math.hypot(x - BARROW.x, z - BARROW.z) < 15) continue;
+    if (Math.hypot(x, z) < 24 || pathDist(x, z) < 3.5 || Math.hypot(x - BARROW.x, z - BARROW.z) < 15 || reserved(x, z, -2)) continue;
     rocks.push({ x, z, sx: 0.8 + r() * 1.6, sy: 0.5 + r() * 0.9, sz: 0.8 + r() * 1.4, ry: r() * TAU });
   }
   const rim = new THREE.InstancedMesh(rockG, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }), rocks.length); const o = new THREE.Object3D();
@@ -948,7 +987,7 @@ function tuftGeo() {
 }
 { // huş, çalı, kuru ot
   const r = mulberry32(77), o = new THREE.Object3D(), vmat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
-  const clear = (x, z, rad) => Math.hypot(x, z) > rad && Math.hypot(x - BARROW.x, z - BARROW.z) > 15 && Math.hypot(x - RUIN.x, z - RUIN.z) > 8;
+  const clear = (x, z, rad) => Math.hypot(x, z) > rad && Math.hypot(x - BARROW.x, z - BARROW.z) > 15 && Math.hypot(x - RUIN.x, z - RUIN.z) > 8 && !reserved(x, z);
   const birch = [];
   for (let i = 0; i < 800 && birch.length < (LOW ? 30 : 60); i++) { const x = (r() * 2 - 1) * 100, z = (r() * 2 - 1) * 100, pd = pathDist(x, z); if (!clear(x, z, 28) || pd < 4) continue; if (pd > 16 && r() < 0.7) continue; birch.push([x, z, 0.8 + r() * 0.5, r() * TAU]); }
   const bm = new THREE.InstancedMesh(birchGeo(), vmat, birch.length);
@@ -962,7 +1001,7 @@ function tuftGeo() {
   const tufts = [];
   for (let i = 0; i < 4000 && tufts.length < (LOW ? 160 : 420); i++) {
     const x = (r() * 2 - 1) * 96, z = (r() * 2 - 1) * 96, vd = Math.hypot(x, z), pd = pathDist(x, z);
-    if (vd < 9 || Math.hypot(x - BARROW.x, z - BARROW.z) < 11.5) continue;
+    if (vd < 9 || Math.hypot(x - BARROW.x, z - BARROW.z) < 11.5 || lakeE(x, z) < 1.12 || Math.hypot(x - LAIR.x, z - LAIR.z) < 5) continue;
     if (!((vd > 11 && vd < 30) || (pd > 1.8 && pd < 7) || Math.hypot(x - RUIN.x, z - RUIN.z) < 12 || r() < 0.12)) continue;
     tufts.push([x, z, 0.8 + r() * 0.7, r() * TAU]);
   }
@@ -973,7 +1012,7 @@ function tuftGeo() {
 { // köy çiti (instanced)
   const posts = [], rails = [];
   const arc = (R, a0, a1) => { const pts = []; for (let a = a0; a <= a1 + 1e-6; a += 2.2 / R) pts.push([Math.cos(a) * R, Math.sin(a) * R]); pts.forEach(([x, z], i) => { posts.push([x, z]); if (i < pts.length - 1) rails.push([x, z, pts[i + 1][0], pts[i + 1][1]]); }); };
-  arc(24, 0.17, 2.1); arc(24, 2.7, 5.06);
+  arc(24, 0.17, 1.2); arc(24, 2.7, 5.06);
   const pg = new THREE.BoxGeometry(0.16, 1.3, 0.16); boxUV(pg, 0.16, 1.3, 0.16, 1.5);
   const rg = new THREE.BoxGeometry(0.07, 0.1, 1); boxUV(rg, 0.07, 0.1, 1, 1.5);
   const pm = new THREE.InstancedMesh(pg, M.woodD, posts.length), cm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.22, 0.09, 0.22), M.snow, posts.length);
@@ -1015,6 +1054,67 @@ function tuftGeo() {
   }
   for (const [x, z, ry] of [[8.4, 4.6, 0.3], [-11.6, 6.4, -0.4]]) { bx(0.8, 0.6, 0.8, M.wood, x, 0.3, z, worldGroup).rotation.y = ry; bx(0.84, 0.08, 0.84, M.snow, x, 0.64, z, worldGroup).rotation.y = ry; addCircle('world', x, z, 0.5); }
 }
+/* ---------- Kuzgun Gölü: buz, kamp, trol ini, kuzgunlar */
+let campFireG = null;
+const iceTex = canvasTex(512, 512, (g, w, h) => {
+  const gr = g.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, w / 2); gr.addColorStop(0, '#7fa9c6'); gr.addColorStop(0.7, '#a9c9dc'); gr.addColorStop(1, '#dfeaf2');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 18; i++) { const x = trng() * w, y = trng() * h, r = 20 + trng() * 60, rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, 'rgba(40,80,120,.25)'); rg.addColorStop(1, 'rgba(40,80,120,0)'); g.fillStyle = rg; g.fillRect(x - r, y - r, r * 2, r * 2); }
+  g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1.5;
+  for (let i = 0; i < 26; i++) { let x = trng() * w, y = trng() * h; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 6; k++) { x += (trng() - 0.5) * 70; y += (trng() - 0.5) * 70; g.lineTo(x, y); } g.stroke(); }
+  for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(240,246,250,${0.25 + trng() * 0.35})`; g.beginPath(); g.ellipse(trng() * w, trng() * h, 10 + trng() * 40, 3 + trng() * 8, trng() * 3, 0, TAU); g.fill(); }
+}, true, true);
+{
+  const ice = new THREE.Mesh(new THREE.CircleGeometry(1, 72).rotateX(-Math.PI / 2), new THREE.MeshPhongMaterial({ map: iceTex, color: 0xffffff, specular: 0xdfefff, shininess: 80 }));
+  ice.scale.set(LAKE.rx * 1.02, 1, LAKE.rz * 1.02); ice.position.set(LAKE.x, -0.97, LAKE.z); ice.receiveShadow = SHADOWS; worldGroup.add(ice);
+  // buz deliği ve tabure
+  const hole = new THREE.Mesh(new THREE.CircleGeometry(0.55, 18).rotateX(-Math.PI / 2), basic(0x07131d)); hole.position.set(FISHHOLE.x, -0.955, FISHHOLE.z); worldGroup.add(hole);
+  const rim = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.78, 18).rotateX(-Math.PI / 2), mk(0xeef3f8)); rim.position.set(FISHHOLE.x, -0.95, FISHHOLE.z); worldGroup.add(rim);
+  bx(0.4, 0.35, 0.4, M.wood, FISHHOLE.x + 1.1, -0.8, FISHHOLE.z - 0.5, worldGroup);
+  // balıkçı kampı (trol dağıtmış): devrilmiş çadır, kurutma sehpası, kırık kızak, sönmüş ateş
+  const cg = new THREE.Group(); cg.position.set(CAMP.x, groundH(CAMP.x, CAMP.z), CAMP.z); worldGroup.add(cg);
+  const tent = new THREE.Mesh(new THREE.ConeGeometry(1.6, 2.4, 6, 1, true), mk(0x9a8a6c, { side: THREE.DoubleSide, flatShading: true })); tent.position.set(-2.2, 0.9, 1.2); tent.rotation.set(0.9, 0.4, 0.3); tent.castShadow = SHADOWS; cg.add(tent);
+  for (const s of [-1, 1]) { const pst = bx(0.1, 1.8, 0.1, M.woodD, 1.6 + s * 0.9, 0.9, -1.4, cg); pst.rotation.z = s * 0.08; }
+  const bar = bx(2.0, 0.08, 0.08, M.woodD, 1.6, 1.7, -1.4, cg); bar.rotation.z = 0.35;
+  for (let i = 0; i < 3; i++) { const f = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.45, 5).rotateX(Math.PI), mk(0x8fa0ab, { flatShading: true })); f.position.set(1.0 + i * 0.45, 1.35 + i * 0.12, -1.4); cg.add(f); }
+  const sled = bx(0.8, 0.15, 1.8, M.wood, -0.6, 0.2, -2.2, cg); sled.rotation.set(0.2, 0.7, 0.9);
+  for (let i = 0; i < 3; i++) { const l = bx(0.12, 0.12, 0.9, M.woodD, 0.3 + Math.cos(i) * 0.5, 0.06, 0.8 + Math.sin(i * 2) * 0.4, cg); l.rotation.y = i * 1.3; }
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.28, 0.8, 10), M.woodD); barrel.position.set(2.2, 0.3, 1.0); barrel.rotation.z = Math.PI / 2; cg.add(barrel);
+  addCircle('world', CAMP.x - 2.2, CAMP.z + 1.2, 1.2); addCircle('world', CAMP.x + 1.6, CAMP.z - 1.4, 0.6); addCircle('world', CAMP.x + 2.2, CAMP.z + 1.0, 0.4);
+  campFireG = makeFire(worldGroup, CAMP.x + 0.3, groundH(CAMP.x + 0.3, CAMP.z + 0.8), CAMP.z + 0.8, 0.7); campFireG.visible = false;
+  // trol ini: mağara ağzı, kemikler, kazık ve kütük
+  const ly = groundH(LAIR.x, LAIR.z + 6.5);
+  const cave = new THREE.Group(); cave.position.set(LAIR.x, ly - 0.4, LAIR.z + 6.8); worldGroup.add(cave);
+  bx(1.4, 4.6, 1.6, M.rstone, -2.1, 2.1, 0, cave).rotation.z = 0.12; bx(1.4, 4.6, 1.6, M.rstone, 2.1, 2.1, 0, cave).rotation.z = -0.12;
+  bx(5.8, 1.3, 1.9, M.rstone, 0, 4.4, 0, cave); bx(3.2, 3.8, 0.3, basic(0x04070b), 0, 1.9, 0.4, cave); bx(6.2, 0.35, 2.1, M.snow, 0, 5.15, 0, cave);
+  for (let i = 0; i < 9; i++) { const b = bx(0.45 * trng() + 0.25, 0.07, 0.09, M.bone, LAIR.x - 3 + trng() * 6, groundH(LAIR.x, LAIR.z) + 0.04, LAIR.z + 1 + trng() * 4, worldGroup); b.rotation.y = trng() * TAU; b.castShadow = false; }
+  bx(0.18, 2.0, 0.18, M.woodD, LAIR.x + 5.2, groundH(LAIR.x + 5.2, LAIR.z + 3.4) + 0.9, LAIR.z + 3.4, worldGroup);
+  const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.3, 8).rotateZ(Math.PI / 2), M.woodD); lg.position.set(LAIR.x + 5.2, groundH(LAIR.x + 5.2, LAIR.z + 2.7) + 0.2, LAIR.z + 2.7); worldGroup.add(lg);
+  addCircle('world', LAIR.x - 2.1, LAIR.z + 6.8, 1.0); addCircle('world', LAIR.x + 2.1, LAIR.z + 6.8, 1.0); addBox('world', LAIR.x - 1.6, LAIR.z + 1.6, LAIR.z + 6.2, LAIR.z + 7.8);
+  // köyün kuzey kapısından göle giden patikaya fener
+  for (const [x, z] of [[-11.5, 24.5], [-9.5, 38]]) { const y = groundH(x, z); bx(0.14, 2.6, 0.14, M.woodD, x, y + 1.3, z, worldGroup); const lan = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.28, 0.2), hdr(0xffb25c, 2.6)); lan.position.set(x, y + 2.35, z + 0.25); worldGroup.add(lan); glow(worldGroup, x, y + 2.35, z + 0.25, 2.4, 0xffa850, 0.5); addCircle('world', x, z, 0.2); }
+}
+/* gölün üstünde süzülen kuzgunlar */
+const ravens = [];
+{
+  const mat = mk(0x14161b, { flatShading: true, side: THREE.DoubleSide });
+  for (let i = 0; i < 3; i++) {
+    const g = new THREE.Group(); worldGroup.add(g);
+    const body = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.6, 5).rotateX(Math.PI / 2), mat); g.add(body);
+    const wings = [];
+    for (const s of [-1, 1]) { const wg = new THREE.Group(); wg.position.x = s * 0.05; g.add(wg); const w = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.28).translate(s * 0.35, 0, 0).rotateX(-Math.PI / 2), mat); wg.add(w); wings.push(wg); }
+    ravens.push({ g, wings, r: 9 + i * 4, h: 13 + i * 2.5, sp: 0.25 + i * 0.07, ph: i * 2.1 });
+  }
+}
+function updateRavens() {
+  for (const rv of ravens) {
+    const a = state.time * rv.sp + rv.ph, x = LAKE.x + Math.cos(a) * rv.r, z = LAKE.z + Math.sin(a) * rv.r * 0.8;
+    rv.g.position.set(x, rv.h + Math.sin(state.time * 0.7 + rv.ph) * 0.8, z);
+    rv.g.rotation.set(0, Math.atan2(-Math.sin(a) * rv.r, Math.cos(a) * rv.r * 0.8), Math.sin(a * 2) * 0.15);
+    const f = Math.sin(state.time * 7 + rv.ph) * 0.6; rv.wings[0].rotation.z = f; rv.wings[1].rotation.z = -f;
+  }
+}
+
 /* baca dumanı ve vadi sisi */
 const smokeParts = [];
 if (!LOW) for (const s of smokeSources) for (let i = 0; i < 6; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.smoke, color: 0x8d96a3, transparent: true, opacity: 0, depthWrite: false })); worldGroup.add(sp); smokeParts.push({ sp, s, t: i / 6 }); }
@@ -1265,6 +1365,9 @@ function buildWeapon(kind, g, K) {
     K.add(g, new THREE.TorusGeometry(0.085, 0.014, 4, 10), 0x9a8048, 0, 0, 1.28);
     for (const s of [-1, 1]) K.add(g, ICO(0.025, 0), 0xcfc6b0, s * 0.06, -0.07, 1.12);
     const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.075), hdr(0x6fd8c9, 1.6)); gem.position.z = 1.3; g.add(gem); glow(g, 0, 0, 1.3, 0.9, 0x6fd8c9, 0.5);
+  } else if (kind === 'club') {
+    K.add(g, alongZ(CYL(0.1, 0.05, 1.35, 7)), 0x5b4636, 0, 0, 0.55);
+    for (let i = 0; i < 4; i++) K.add(g, ICO(0.07, 0), 0x4a3a2c, Math.cos(i * 1.7) * 0.08, Math.sin(i * 1.7) * 0.08, 0.95 + i * 0.07);
   } else if (kind === 'hammer') {
     K.add(g, alongZ(CYL(0.022, 0.026, 0.5, 6)), 0x5b4636, 0, 0, 0.2);
     K.add(g, CYL(0.075, 0.075, 0.26, 6), 0x7c858e, 0, 0, 0.47, 0, 0, Math.PI / 2);
@@ -1344,6 +1447,7 @@ function makeHumanoid(o) {
     K.add(headG, new THREE.SphereGeometry(0.205, 8, 6, 0, TAU, 0, Math.PI * 0.62).scale(1, 1.1, 1.05), C.cloak, 0, 0.04, -0.03, -0.45);
     K.add(headG, CYL(0.19, 0.25, 0.16, 8).scale(1, 1, 0.8), C.cloak, 0, -0.14, -0.02);
   }
+  if (o.tusks) for (const s of [-1, 1]) K.add(headG, new THREE.ConeGeometry(0.022, 0.1, 4), 0xf2eee2, s * 0.065, -0.01, 0.14);
   if (o.crown) {
     K.add(headG, new THREE.CylinderGeometry(0.178, 0.178, 0.07, 8, 1, true), 0x9a8048, 0, 0.19, 0);
     for (let i = 0; i < 6; i++) K.add(headG, new THREE.ConeGeometry(0.028, 0.12, 4), 0x9a8048, Math.sin((i / 6) * TAU) * 0.178, 0.28, Math.cos((i / 6) * TAU) * 0.178);
@@ -1365,6 +1469,7 @@ function makeHumanoid(o) {
     return { a, fa, mount };
   };
   const R = mkArm(-1, 0.28), L = mkArm(1, 0.22);
+  if (o.armScale) for (const A of [R.a, L.a]) A.scale.set(1.1, o.armScale, 1.1);
   // bacaklar
   const mkLeg = (side) => {
     const l = new THREE.Group(); l.position.set(side * 0.115 * bw, -0.02, 0); hips.add(l);
@@ -1475,6 +1580,7 @@ function animHumanoid(h, a, dt) {
     h.armL.rotation.x = ep.lx; h.armL.rotation.z = ep.lz;
     h.torso.rotation.y = ep.ty; h.torso.rotation.x += ep.tx; h.hips.position.y -= ep.drop; h.legOff = ep;
   } else h.armR.rotation.z = 0;
+  if (a.pose === 'tied') { h.armR.rotation.x = 0.6; h.armL.rotation.x = 0.6; h.armR.rotation.z = -0.35; h.armL.rotation.z = 0.35; h.headG.rotation.x = 0.25; } else h.headG.rotation.x = 0;
   // bacaklar: yürürken ayak ileri taşınırken kalkar; sol bacak sağ kolla birlikte ileri gider
   const hipY = h.hips.position.y - 0.02, stride = 0.25 * sw * (a.speed > 6.5 ? 1.35 : 1) * (1 - 0.35 * cr), lift = 0.14 * sw;
   for (const [leg, sg] of [[h.legL, 1], [h.legR, -1]]) {
@@ -1590,8 +1696,8 @@ const P = {
   moveSpeedNow: 0, hurtFlash: 0,
   skills: { onehand: { lvl: 15, xp: 0 }, block: { lvl: 15, xp: 0 }, sneak: { lvl: 15, xp: 0 }, rune: { lvl: 15, xp: 0 }, lock: { lvl: 15, xp: 0 } },
   charLvl: 1, charXp: 0, pendingLevels: 0,
-  inv: { gold: 12, potions: 1, picks: 4, herbs: 0, pelts: 0, weaponBonus: 0, sharpen: 0, sword: 'Demir kılıç', rune: false },
-  stage: 0, stats: { kills: 0, sneakAtk: 0, time: 0, deaths: 0 }, bounty: null, lastTpl: null,
+  inv: { gold: 12, potions: 1, picks: 4, herbs: 0, pelts: 0, weaponBonus: 0, sharpen: 0, sword: 'Demir kılıç', rune: false, rod: false, fish: { ringa: 0, alabalik: 0, turna: 0 } },
+  stage: 0, stats: { kills: 0, sneakAtk: 0, time: 0, deaths: 0, fish: 0 }, bounty: null, lastTpl: null, side: { ulf: 0 }, track: 'main',
 };
 P.model = makeHumanoid({ body: 0x7a3b2e, skin: 0xd9b89c, dark: 0x4b4038, leather: 0x4e3626, metal: 0xa3acb5, cloak: 0x5d4b3b, fur: 0xd6cdbd, helmet: true, cloakBack: true, weapon: 'sword', shield: ['#8c3226', '#e3d6b4'], beard: 0x8a5a33, beardBraid: true, hair: 0x8a5a33, longHair: true, skirt: 'tunic', trim: 0xd8b86a, buckle: true, pauldron: 'plate', wraps: 0xb5a58a, gloves: true });
 scene.add(P.model.root);
@@ -1611,6 +1717,7 @@ addNPC('sigrun', 'Sigrun', { body: 0x34466b, skin: 0xd8bca4, dark: 0x2a2f3d, clo
 addNPC('bjorn', 'Bjorn', { body: 0x6f5a3e, skin: 0xd4ad8c, dark: 0x3a2a1e, leather: 0x3e2c20, hair: 0xb0602e, bald: true, beard: 0xb0602e, beardLen: 0.3, beardBraid: true, weapon: 'hammer', skirt: 'tunic', apron: 0x4a3526, build: 1.15, bareArms: true }, 9.9, 2.4, -1.2, { pose: 'hammer' });
 addNPC('eira', 'Eira', { body: 0xd8cfb5, skin: 0xe0c2a6, dark: 0x5a4a3a, hair: 0xd9b46a, braids: true, skirt: 'dress', skirtColor: 0x3f5e7a, apron: 0x3f5e7a, brooch: true, necklace: 0x9b3a2e }, -3, 8, 0, { wp: [[-3, 8], [6, -1], [-6, -7], [-3, -1]] });
 addNPC('hakon', 'Hakon', { body: 0x4f5d3a, skin: 0xcfa88a, hair: 0x5a3b22, beard: 0x5a3b22, beardLen: 0.14, skirt: 'tunic', trim: 0x8a6a3a, cloak: 0x6b5a45, cloakBack: true, wraps: 0x9a8a70 }, 4, 9, 0, { wp: [[4, 9], [8, -7], [-2, -9], [-10, 1]] });
+addNPC('ulf', 'Ulf', { body: 0x5a6b7a, skin: 0xd8b49a, dark: 0x3a3a38, hair: 0x6b4a2e, beard: 0x6b4a2e, beardLen: 0.2, hood: true, cloak: 0x8a7a64, skirt: 'tunic', wraps: 0x9a8a70 }, LAIR.x + 5.2, LAIR.z + 2.8, Math.PI, { pose: 'tied' });
 addBlob(() => P.pos, () => true, 1.3);
 for (const n of Object.values(npcs)) addBlob(() => n.pos, () => state.zone === 'world', 1.1);
 function updateNPCs(dt) {
@@ -1625,14 +1732,19 @@ function updateNPCs(dt) {
       }
       n.col.x = n.pos.x; n.col.z = n.pos.z; collideStatic(n.pos, 0.35, 'world'); n.col.x = n.pos.x; n.col.z = n.pos.z;
       if (state.zone === 'world') { const dx = n.pos.x - P.pos.x, dz = n.pos.z - P.pos.z, d = Math.hypot(dx, dz); if (d < 0.8 && d > 1e-3) { n.pos.x = P.pos.x + (dx / d) * 0.8; n.pos.z = P.pos.z + (dz / d) * 0.8; } }
-    } else if (state.zone === 'world') {
+    } else if (n.dest) {
+      const dx = n.dest.x - n.pos.x, dz = n.dest.z - n.pos.z, d = Math.hypot(dx, dz);
+      if (d < 0.4) { n.home = { x: n.dest.x, z: n.dest.z, yaw: n.dest.yaw }; n.dest = null; }
+      else { spd = 1.7; n.pos.x += (dx / d) * spd * dt; n.pos.z += (dz / d) * spd * dt; n.yaw += angDiff(n.yaw, Math.atan2(dx, dz)) * Math.min(1, dt * 6); }
+      n.col.x = n.pos.x; n.col.z = n.pos.z; collideStatic(n.pos, 0.35, 'world'); n.col.x = n.pos.x; n.col.z = n.pos.z;
+    } else if (state.zone === 'world' && n.pose !== 'tied') {
       const d = Math.hypot(P.pos.x - n.pos.x, P.pos.z - n.pos.z);
       const want = d < 6 ? Math.atan2(P.pos.x - n.pos.x, P.pos.z - n.pos.z) : n.home.yaw;
       n.yaw += angDiff(n.yaw, want) * Math.min(1, dt * 3);
     }
     n.pos.y = groundH(n.pos.x, n.pos.z);
     n.model.root.position.copy(n.pos); n.model.root.rotation.y = n.yaw;
-    animHumanoid(n.model, { speed: spd, atkPhase: -1, roll: -1, pose: n.pose }, dt);
+    animHumanoid(n.model, { speed: spd, atkPhase: -1, roll: -1, pose: n.pose, sit: n.pose === 'tied' ? 1 : 0 }, dt);
   }
 }
 
@@ -1642,11 +1754,13 @@ function updateNPCs(dt) {
 const ENEMY = {
   wolf: { hp: 32, r: 0.5, speed: 6.0, dmg: 7, range: 1.8, windup: 0.42, strike: 0.24, recover: 0.55, detect: 17, cone: 2.4, height: 1.15, name: 'Kurt' },
   draugr: { hp: 48, r: 0.45, speed: 3.7, dmg: 13, range: 2.1, windup: 0.7, strike: 0.16, recover: 0.6, detect: 13, cone: 2.0, height: 2.05, name: 'Draugr' },
+  troll: { hp: 170, r: 0.75, speed: 3.9, dmg: 20, range: 2.8, windup: 0.95, strike: 0.22, recover: 0.8, detect: 16, cone: 2.4, height: 3.1, name: 'Buz Trolü' },
   boss: { hp: 300, r: 0.85, speed: 3.4, dmg: 22, range: 3.1, windup: 0.85, strike: 0.22, recover: 0.75, detect: 40, cone: 6.3, height: 3.2, name: 'Höyük Kralı' },
 };
 const LOOK = {
   draugr: { body: 0x4b5146, skin: 0x8e9b8c, dark: 0x2c2f2a, metal: 0x6d6255, leather: 0x3a3228, helmet: true, weapon: 'rusty', eyes: 0xb8ff6a, skirt: 'tunic', thin: true, lean: 0.18, ribs: true, tatters: 0x3d4238, hair: 0x9aa29a, longHair: true, beard: 0x8c948a, beardLen: 0.26, wraps: 0x5a5a4a },
   draugr2: { body: 0x3e4239, skin: 0x97a295, dark: 0x282b26, metal: 0x6d6255, leather: 0x352d25, hood: true, cloak: 0x33372f, weapon: 'rusty', eyes: 0xb8ff6a, skirt: 'tunic', thin: true, lean: 0.22, ribs: true, tatters: 0x2f332c, hair: 0xa9b0a7, braids: true, wraps: 0x55554a },
+  troll: { body: 0x7f8f9c, skin: 0x9fb1bf, dark: 0x5f6e7a, leather: 0x4a3f36, fur: 0xe4e8ec, bareArms: true, build: 1.3, lean: 0.4, hair: 0xe8ecf0, longHair: true, beard: 0xdfe4ea, beardLen: 0.26, eyes: 0x9fe6ff, weapon: 'club', tusks: true, skirt: 'tunic', armScale: 1.25, tatters: 0x6b5a48 },
   boss: { body: 0x2f3542, skin: 0x7f8c86, dark: 0x1f232b, metal: 0x5d5a52, cloak: 0x3a2a3e, leather: 0x2a2320, crown: true, cloakBack: true, weapon: 'axe', eyes: 0x6fd8c9, skirt: 'tunic', pauldron: 'spiky', fur: 0x4a4550, vest: 0x3b4250, chestRune: 0x6fd8c9, hair: 0xa6aca4, longHair: true, beard: 0xa6aca4, beardLen: 0.34, beardBraid: true, build: 1.1, lean: 0.08 },
 };
 const texMark = (txt, color) => {
@@ -1662,6 +1776,7 @@ function spawnEnemy(kind, id, zone, x, z, opt = {}) {
   const d = ENEMY[kind];
   const model = kind === 'wolf' ? makeWolf() : makeHumanoid(kind === 'draugr' ? (id.charCodeAt(id.length - 1) % 2 ? LOOK.draugr : LOOK.draugr2) : LOOK[kind]);
   if (kind === 'boss') model.root.scale.setScalar(1.55);
+  if (kind === 'troll') model.root.scale.setScalar(1.6);
   (zone === 'world' ? worldGroup : dungeonGroup).add(model.root);
   const e = {
     kind, id, zone, def: d, model, pos: new THREE.Vector3(x, 0, z), home: new THREE.Vector3(x, 0, z), yaw: opt.yaw ?? Math.random() * TAU,
@@ -1674,7 +1789,7 @@ function spawnEnemy(kind, id, zone, x, z, opt = {}) {
   e.bar = { bg, fill }; scene.add(bg, fill); bg.visible = fill.visible = false;
   e.mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX_Q, depthTest: false, toneMapped: false, transparent: true })); e.mark.scale.set(0.6, 0.6, 1); e.mark.renderOrder = 22; e.mark.visible = false; scene.add(e.mark);
   if (opt.emerge) { e.state = 'rising'; e.t = 0; }
-  e.blob = addBlob(() => e.pos, () => e.zone === state.zone && e.model.root.visible && e.state !== 'dormant' && !(e.dead && e.deadT > 2.5), kind === 'boss' ? 2.4 : kind === 'wolf' ? 1.4 : 1.2);
+  e.blob = addBlob(() => e.pos, () => e.zone === state.zone && e.model.root.visible && e.state !== 'dormant' && !(e.dead && e.deadT > 2.5), kind === 'boss' ? 2.4 : kind === 'troll' ? 2.3 : kind === 'wolf' ? 1.4 : 1.2);
   enemies.push(e); return e;
 }
 function removeEnemy(e) {
@@ -1687,6 +1802,9 @@ spawnEnemy('wolf', 'w4', 'world', 58, -45, { pack: 'B' }); spawnEnemy('wolf', 'w
 spawnEnemy('draugr', 'd1', 'dungeon', DX, 16, { yaw: 0, patrol: [[DX, 16], [DX, 27.5]] });
 SARC.forEach((z, i) => spawnEnemy('draugr', 'd' + (i + 2), 'dungeon', DX - 7.25, z, { yaw: Math.PI / 2, dormant: true }));
 spawnEnemy('draugr', 'd5', 'dungeon', DX + 34, 6, { yaw: -Math.PI / 2, patrol: [[DX + 34, 6], [DX + 16, 6]] });
+spawnEnemy('wolf', 'w6', 'world', -22, 40, { pack: 'C' }); spawnEnemy('wolf', 'w7', 'world', -25, 43, { pack: 'C' });
+const troll = spawnEnemy('troll', 'troll', 'world', LAIR.x, LAIR.z + 2, { yaw: Math.PI });
+const heavyFoe = (e) => e.kind === 'boss' || e.kind === 'troll';
 const boss = spawnEnemy('boss', 'boss', 'dungeon', DX + 50.1, 37, { yaw: -Math.PI / 2, throne: true });
 const bossState = { triggered: false };
 const slamDisc = new THREE.Mesh(new THREE.CircleGeometry(1, 40).rotateX(-Math.PI / 2), basic(0xe5503f, { transparent: true, opacity: 0.28, depthWrite: false }));
@@ -1739,8 +1857,8 @@ const arcH = new THREE.RingGeometry(0.45, 1.0, 20, 1, -0.95, 1.9).rotateX(-Math.
 const arcV = new THREE.RingGeometry(0.45, 1.0, 20, 1, -0.95, 1.9).rotateY(-Math.PI / 2);
 const arcs = [];
 function slashArc(e) {
-  const t = e.atkType, vert = t === 'chop', sc = e.kind === 'boss' ? 1.55 : 1;
-  const m = new THREE.Mesh(vert ? arcV : arcH, basic(e.kind === 'boss' ? 0x6fd8c9 : 0xc8ffb0, { transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  const t = e.atkType, vert = t === 'chop', sc = e.kind === 'boss' ? 1.55 : e.kind === 'troll' ? 1.6 : 1;
+  const m = new THREE.Mesh(vert ? arcV : arcH, basic(e.kind === 'boss' ? 0x6fd8c9 : e.kind === 'troll' ? 0x9fe6ff : 0xc8ffb0, { transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
   m.position.set(e.pos.x, e.pos.y + (vert ? 0.95 : 1.15) * sc, e.pos.z); m.rotation.set(0, e.yaw, t === 'slash' ? 0.45 : t === 'heavy' ? -0.2 : 0);
   m.scale.setScalar(e.def.range); scene.add(m); arcs.push({ m, t: 0 });
 }
@@ -1834,6 +1952,16 @@ function updateFeet(dt, moved) {
   footFade.needsUpdate = true;
 }
 const emberV = new THREE.Vector3();
+{ // trol ayak izleri: dağıtılmış kamptan buzun üstünden ine
+  const pts = [[CAMP.x - 1, CAMP.z + 3], [FISHHOLE.x + 1.5, FISHHOLE.z - 1.5], [-5, 70], [LAIR.x + 0.5, LAIR.z - 3]];
+  const geo = new THREE.PlaneGeometry(0.42, 0.75).rotateX(-Math.PI / 2); geo.setAttribute('aFade', new THREE.InstancedBufferAttribute(new Float32Array(64).fill(1.6), 1));
+  const tr = new THREE.InstancedMesh(geo, feet.material, 64), o = new THREE.Object3D(); let k = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [ax, az] = pts[i], [bx2, bz] = pts[i + 1], L = Math.hypot(bx2 - ax, bz - az), yaw = Math.atan2(bx2 - ax, bz - az);
+    for (let d = 0; d < L && k < 64; d += 2.2) { const sd = k % 2 ? 1 : -1, x = ax + ((bx2 - ax) * d) / L + Math.cos(yaw) * 0.35 * sd, z = az + ((bz - az) * d) / L - Math.sin(yaw) * 0.35 * sd; o.position.set(x, groundH(x, z) + 0.05, z); o.rotation.set(0, yaw, 0); o.updateMatrix(); tr.setMatrixAt(k++, o.matrix); }
+  }
+  tr.count = k; tr.frustumCulled = false; worldGroup.add(tr);
+}
 
 /* =====================================================================
    Ses (WebAudio ile sentezlenir, dosya yok)
@@ -1889,6 +2017,7 @@ function sfx(n) {
       case 'click': AU.burst(0.03, 0.2, 'highpass', 2500); break;
       case 'strain': AU.tone('square', 180 + Math.random() * 40, 0, 0.04, 0.025); break;
       case 'break': AU.tone('square', 900, 200, 0.15, 0.1); AU.burst(0.1, 0.3, 'highpass', 2000); break;
+      case 'splash': AU.burst(0.35, 0.22, 'lowpass', 1400, 250); AU.tone('sine', 300, 120, 0.2, 0.05); break;
       case 'unlock': AU.tone('triangle', 500, 0, 0.08, 0.15); AU.tone('triangle', 750, 0, 0.15, 0.15, 0.08); break;
       case 'door': AU.burst(0.7, 0.3, 'lowpass', 400, 90); AU.tone('sine', 55, 40, 0.7, 0.3); break;
       case 'drink': AU.burst(0.25, 0.12, 'bandpass', 800, 1600, 0, 4); AU.tone('sine', 400, 700, 0.25, 0.06); break;
@@ -1958,6 +2087,9 @@ const inters = [];
 const addInter = (o) => { if (o.r === undefined) o.r = 2.2; if (!o.can) o.can = () => true; inters.push(o); return o; };
 addInter({ id: 'sigrun', zone: 'world', get x() { return npcs.sigrun.pos.x; }, get z() { return npcs.sigrun.pos.z; }, r: 2.6, label: () => 'Konuş · Sigrun', act: talkSigrun });
 addInter({ id: 'bjorn', zone: 'world', get x() { return npcs.bjorn.pos.x; }, get z() { return npcs.bjorn.pos.z; }, r: 2.6, label: () => 'Konuş · Bjorn (demirci)', act: talkBjorn });
+addInter({ id: 'hakon', zone: 'world', get x() { return npcs.hakon.pos.x; }, get z() { return npcs.hakon.pos.z; }, r: 2.4, label: () => 'Konuş · Hakon', act: talkHakon });
+addInter({ id: 'ulf', zone: 'world', get x() { return npcs.ulf.pos.x; }, get z() { return npcs.ulf.pos.z; }, r: 2.4, label: () => (P.side.ulf <= 4 ? 'Çöz · Ulf' : 'Konuş · Ulf'), act: talkUlf });
+addInter({ id: 'fishhole', zone: 'world', x: FISHHOLE.x, z: FISHHOLE.z, r: 1.9, label: () => (P.inv.rod ? 'Balık tut · Buz deliği' : 'Buz deliği (olta gerekli)'), act: openFishing });
 addInter({ id: 'board', zone: 'world', x: 5.6, z: -3.4, r: 2.3, label: () => 'Oku · İlan tahtası', act: talkBoard });
 addInter({ id: 'cauldron', zone: 'world', x: -8.8, z: 5.6, r: 1.9, label: () => `Kazan · ${P.inv.herbs}/3 kar çiçeği`, act: talkCauldron });
 addInter({ id: 'barrow', zone: 'world', x: DOOR.x + DOOR_DIR.x * 1.2, z: DOOR.z + DOOR_DIR.z * 1.2, r: 2.4, label: () => 'Gir · Ata Höyüğü', act: () => changeZone('dungeon') });
@@ -2038,6 +2170,7 @@ function changeZone(z) {
    ===================================================================== */
 const BOUNTY_TPL = {
   wolves: { title: 'Kurt sürüsü', need: 3, reward: 30, text: 'Batı ormanında bir sürü ağıllara diş geçiriyor. Üç kurt avlayana otuz altın. — Köy meclisi' },
+  fish: { title: 'Balıkçının siparişi', need: 3, reward: 30, text: 'Kış erzakı için taze balık lazım. Üç balık getirene otuz altın. Tahtaya teslim et. — Bjorn' },
   herbs: { title: 'Şifacının derdi', need: 4, reward: 25, text: 'Kışın ortasında öksürük yayıldı. Dört kar çiçeği getirene yirmi beş altın. Tahtaya teslim et. — Sigrun' },
   draugr: { title: 'Höyük temizliği', need: 3, reward: 45, text: 'Höyükten gelen sesler durmuyor. Üç draugru toprağa geri gönderene kırk beş altın. — Köy meclisi' },
 };
@@ -2056,6 +2189,106 @@ function bountyProgress(kind) {
     if (b.count >= BOUNTY_TPL[b.tpl].need) { b.done = true; toast('İlan tamamlandı · ödül tahtada'); }
   }
 }
+/* Yan görev: Kayıp Balıkçı. ulf: 0 alınmadı, 1 kampa git, 2 izleri takip et, 3 trolü yen, 4 Ulf'u çöz, 5 Hakon'a haber ver, 6 bitti */
+function sideObjective() {
+  const u = P.side.ulf; let text = '', t = null;
+  if (u === 1) { text = "Kuzgun Gölü'ndeki balıkçı kampına git"; t = { zone: 'world', x: CAMP.x, z: CAMP.z }; }
+  else if (u === 2) { text = 'Trol izlerini gölün öbür yakasına kadar takip et'; t = { zone: 'world', x: LAIR.x, z: LAIR.z }; }
+  else if (u === 3) { text = "Buz Trolü'nü yen"; t = { zone: 'world', x: troll.pos.x, z: troll.pos.z }; }
+  else if (u === 4) { text = "Ulf'u çöz"; t = { zone: 'world', x: npcs.ulf.pos.x, z: npcs.ulf.pos.z }; }
+  else if (u === 5) { text = "Hakon'a kardeşinin haberini ver"; t = { zone: 'world', x: npcs.hakon.pos.x, z: npcs.hakon.pos.z }; }
+  else return null;
+  if (state.zone !== 'world') t = { zone: 'dungeon', x: DX, z: 1.4 };
+  return { text, t };
+}
+function sideTriggers() {
+  const u = P.side.ulf;
+  if (u === 1 && Math.hypot(P.pos.x - CAMP.x, P.pos.z - CAMP.z) < 7) {
+    P.side.ulf = 2; P.track = 'side'; centerMsg('KAMP DAĞITILMIŞ');
+    toast('Karda devasa ayak izleri var. İzler buzun üstünden kuzeye gidiyor.'); saveGame();
+  } else if (u === 2 && Math.hypot(P.pos.x - LAIR.x, P.pos.z - LAIR.z) < 20) {
+    P.side.ulf = troll.dead ? 4 : 3; saveGame();
+    if (!troll.dead) toast('Kazığa bağlı biri var. Önce trolü alt et.');
+  }
+}
+function syncUlf() {
+  const n = npcs.ulf;
+  if (P.side.ulf >= 5) { n.pose = null; n.dest = null; n.pos.set(CAMP.x - 0.8, 0, CAMP.z - 0.2); n.yaw = 0.4; n.home = { x: n.pos.x, z: n.pos.z, yaw: 0.4 }; campFireG.visible = true; }
+}
+function talkHakon() {
+  const u = P.side.ulf, n = npcs.hakon; n.wait = 4;
+  if (u === 0) {
+    const menu = (text) => openDialog('Hakon', text, [
+      { t: 'Onu bulurum.', f: () => { P.side.ulf = 1; P.track = 'side'; sfx('pickup'); toast('Yeni yan görev: Kayıp Balıkçı'); saveGame(); openDialog('Hakon', "Kuzey kapısından çık, fenerli patikayı izle. Kamp gölün güney kıyısında. Kurtlara dikkat et, kış onları da acıktırdı.", [bye('Yola çıkıyorum')]); } },
+      { t: 'Ne gürlemesi?', f: () => menu('Eskiler buzdan inen trollerden söz eder; kış erzakı toplarlarmış. Ben hep masal sanırdım. Artık emin değilim.') },
+      bye('Şimdi olmaz'),
+    ]);
+    menu("Yolcu, bir dakika. Kardeşim Ulf iki gün önce kuzeydeki Kuzgun Gölü'ne balığa gitti, dönmedi. Geceleri gölden garip bir gürleme geliyor.");
+  } else if (u >= 1 && u <= 4) openDialog('Hakon', "Ulf'tan haber var mı? Kamp gölün güney kıyısında, oradan başla.", [bye('Arıyorum')]);
+  else if (u === 5) {
+    openDialog('Hakon', "Yaşıyor mu? Trol mü dedin... Sağ ol, yolcu. Bu tılsım babamdandı; artık seni korusun. Bu keseyi de al.", [{ t: 'Teşekkürler', f: () => {
+      P.side.ulf = 6; P.maxHp += 15; P.hp = P.maxHp; P.inv.gold += 50; P.track = 'main'; sfx('level'); centerMsg('YAN GÖREV TAMAMLANDI'); toast('Hakon\'un tılsımı: en yüksek can +15'); toast('50 altın'); closeDialog(); saveGame();
+    } }]);
+  } else openDialog('Hakon', 'Kardeşim sayende evde sayılır. Gölde balık tutarsan Bjorn iyi fiyat verir.', [bye()]);
+}
+function talkUlf() {
+  const u = P.side.ulf, n = npcs.ulf;
+  if (u <= 3 && !troll.dead) { openDialog('Ulf', '(Bağlı, fısıldar) Trol... uyanmadan... dikkat et!', [bye('Sessiz ol')]); return; }
+  if (u <= 4) {
+    openDialog('Ulf', "Bağları kes, çabuk! O canavar beni kış erzakı sanmıştı. Kampımı toparlayıp döneceğim. Hakon'a haber ver, meraktan ölmüştür. Al, oltam senin; göldeki delikten balık tutabilirsin.", [{ t: 'İpleri kes', f: () => {
+      P.side.ulf = 5; P.inv.rod = true; P.track = 'side'; n.pose = null; n.dest = { x: CAMP.x - 0.8, z: CAMP.z - 0.2, yaw: 0.4 }; campFireG.visible = true;
+      sfx('pickup'); toast('Olta aldın: buz deliğinde balık tutabilirsin'); closeDialog(); saveGame();
+    } }]);
+    return;
+  }
+  openDialog('Ulf', 'Şamandıra batınca hemen çek; bekleme, erken de çekme. Buz turnası nadirdir ama Bjorn ona iyi para verir.', [bye('Rast gele')]);
+}
+/* Buzda balık tutma */
+const FISH_TYPES = { ringa: { name: 'Ringa', v: 6, w: 60 }, alabalik: { name: 'Alabalık', v: 11, w: 32 }, turna: { name: 'Buz turnası', v: 28, w: 8 } };
+const fishTotal = () => P.inv.fish.ringa + P.inv.fish.alabalik + P.inv.fish.turna;
+const fishValue = () => Object.entries(FISH_TYPES).reduce((a, [k, f]) => a + P.inv.fish[k] * f.v, 0);
+function takeFish(n) { for (const k of ['ringa', 'alabalik', 'turna']) { const t = Math.min(n, P.inv.fish[k]); P.inv.fish[k] -= t; n -= t; } }
+const FG = { state: 'wait', t: 0, next: 2, msgT: 0 };
+const fishEl = $('#fishing'), fishCanvas = $('#fishCanvas'), fg = fishCanvas.getContext('2d');
+function openFishing() {
+  if (!P.inv.rod) { toast('Oltan yok. Belki biri ödünç verir.'); return; }
+  if (input.locked) document.exitPointerLock?.();
+  FG.state = 'wait'; FG.t = 0; FG.next = 1.6 + Math.random() * 2.8; $('#fishMsg').textContent = '';
+  state.mode = 'fishing'; releaseInputs(); fishEl.hidden = false; arm(fishEl); syncOverlays(); sfx('splash');
+}
+function closeFishing() { fishEl.hidden = true; state.mode = 'play'; syncOverlays(); saveGame(true); }
+function pullFish() {
+  if (state.mode !== 'fishing' || fishEl.classList.contains('arming')) return;
+  const m = $('#fishMsg');
+  if (FG.state === 'bite') {
+    let r = Math.random() * 100, k = 'ringa'; for (const [id, f] of Object.entries(FISH_TYPES)) { if (r < f.w) { k = id; break; } r -= f.w; }
+    P.inv.fish[k]++; P.stats.fish++; m.textContent = `${FISH_TYPES[k].name} tuttun!`; sfx(k === 'turna' ? 'level' : 'pickup'); vibrate(25);
+    FG.state = 'caught'; FG.t = 0;
+  } else if (FG.state === 'wait') { m.textContent = 'Çok erken çektin, balık ürktü.'; FG.t = 0; FG.next = 2.2 + Math.random() * 2.5; sfx('splash'); }
+}
+function updateFishing(dt) {
+  FG.t += dt;
+  if (FG.state === 'wait' && FG.t >= FG.next) { FG.state = 'bite'; FG.t = 0; sfx('splash'); vibrate(40); }
+  else if (FG.state === 'bite' && FG.t > 0.75) { FG.state = 'wait'; FG.t = 0; FG.next = 1.8 + Math.random() * 3; $('#fishMsg').textContent = 'Balık yemi aldı, kaçtı.'; }
+  else if (FG.state === 'caught' && FG.t > 1.1) { FG.state = 'wait'; FG.t = 0; FG.next = 1.6 + Math.random() * 3; }
+  $('#fishCount').textContent = fishTotal();
+  const W = fishCanvas.width, H = fishCanvas.height, cx = W / 2, cy = H * 0.58, t = state.time;
+  fg.fillStyle = '#dfe9f1'; fg.fillRect(0, 0, W, H);
+  fg.fillStyle = '#b9cfdf'; for (let i = 0; i < 6; i++) { fg.beginPath(); fg.ellipse((i * 67) % W, (i * 41) % H, 40, 10, i, 0, TAU); fg.fill(); }
+  fg.fillStyle = '#0b1b27'; fg.beginPath(); fg.ellipse(cx, cy, 92, 58, 0, 0, TAU); fg.fill();
+  fg.strokeStyle = '#f4f8fb'; fg.lineWidth = 6; fg.stroke();
+  fg.fillStyle = 'rgba(111,160,190,.25)'; for (let i = 0; i < 2; i++) { const a = t * (0.5 + i * 0.3) + i * 2; fg.beginPath(); fg.ellipse(cx + Math.cos(a) * 45, cy + Math.sin(a) * 22, 18, 6, a, 0, TAU); fg.fill(); }
+  const bite = FG.state === 'bite', dip = bite ? 10 + Math.sin(t * 30) * 3 : Math.sin(t * 2.2) * 2, by = cy + dip;
+  if (bite) { fg.strokeStyle = 'rgba(223,240,255,.7)'; fg.lineWidth = 2; for (let i = 0; i < 2; i++) { const r = ((FG.t * 60 + i * 20) % 40) + 8; fg.beginPath(); fg.ellipse(cx, cy + 4, r, r * 0.4, 0, 0, TAU); fg.stroke(); } }
+  fg.strokeStyle = 'rgba(30,30,30,.8)'; fg.lineWidth = 1.5; fg.beginPath(); fg.moveTo(cx + 70, 6); fg.quadraticCurveTo(cx + 30, by - 60, cx, by - 8); fg.stroke();
+  fg.fillStyle = '#e8e2d4'; fg.beginPath(); fg.arc(cx, by - 6, 8, Math.PI, TAU); fg.fill();
+  fg.fillStyle = '#c9463c'; fg.beginPath(); fg.arc(cx, by - 6, 8, 0, Math.PI); fg.fill();
+  if (bite) { fg.fillStyle = '#e6c46f'; fg.font = '700 34px Georgia, serif'; fg.textAlign = 'center'; fg.fillText('!', cx, cy - 58); }
+  $('#fishPull').classList.toggle('on', bite);
+}
+$('#fishPull').addEventListener('pointerdown', (e) => { e.preventDefault(); pullFish(); });
+$('#fishClose').addEventListener('click', closeFishing);
+$('#objCard').addEventListener('click', () => { if (!sideObjective() || P.stage >= 6) return; P.track = P.track === 'side' ? 'main' : 'side'; sfx('ui'); toast(P.track === 'side' ? 'İşaret: Kayıp Balıkçı' : 'İşaret: Ata Rünü'); });
 function objective() {
   const s = P.stage; let text = '', t = null;
   if (s === 0) { text = "Isvik'te Sigrun ile konuş"; t = { zone: 'world', x: npcs.sigrun.pos.x, z: npcs.sigrun.pos.z }; }
@@ -2123,6 +2356,7 @@ function talkBjorn() {
     { t: 'Şifa iksiri', note: '15 altın', dis: P.inv.gold < 15, f: () => { P.inv.gold -= 15; P.inv.potions++; sfx('gold'); shop('Al bakalım. Tadı kötü ama işini görür.'); } },
     { t: 'Maymuncuk ×3', note: '10 altın', dis: P.inv.gold < 10, f: () => { P.inv.gold -= 10; P.inv.picks += 3; sfx('gold'); shop('İnce çelik. Zorlama, kırılır.'); } },
     { t: 'Kılıcı bile', note: P.inv.sharpen >= 3 ? 'en keskin hâlinde' : `+2 hasar · ${sharpenCost} altın`, dis: P.inv.sharpen >= 3 || P.inv.gold < sharpenCost, f: () => { P.inv.gold -= sharpenCost; P.inv.sharpen++; P.inv.weaponBonus += 2; sfx('block'); shop('Kıvılcım gibi kesecek artık.'); } },
+    ...(fishTotal() > 0 ? [{ t: `Balıkları sat ×${fishTotal()}`, note: `${fishValue()} altın`, f: () => { P.inv.gold += fishValue(); P.inv.fish = { ringa: 0, alabalik: 0, turna: 0 }; sfx('gold'); shop('Taze mi bunlar? Kokusundan belli. Al paranı.'); } }] : []),
     ...(P.inv.pelts > 0 ? [{ t: `Kurt postu sat ×${P.inv.pelts}`, note: `${P.inv.pelts * 8} altın`, f: () => { P.inv.gold += P.inv.pelts * 8; P.inv.pelts = 0; sfx('gold'); shop('Güzel post. Kışın paraya döner.'); } }] : []),
     bye(),
   ]);
@@ -2141,11 +2375,15 @@ function talkBoard() {
       const ok = P.inv.herbs >= tp.need;
       openDialog('İlan tahtası', `${tp.text}\n\nÜzerinde ${P.inv.herbs} kar çiçeği var.`, [
         { t: 'Çiçekleri teslim et', dis: !ok, note: ok ? '' : `${tp.need} gerekli`, f: () => { P.inv.herbs -= tp.need; b.done = true; talkBoard(); } }, bye('Bırak')]);
+    } else if (b.tpl === 'fish') {
+      const ok = fishTotal() >= tp.need;
+      openDialog('İlan tahtası', `${tp.text}\n\nSepetinde ${fishTotal()} balık var.`, [
+        { t: 'Balıkları teslim et', dis: !ok, note: ok ? '' : `${tp.need} gerekli`, f: () => { takeFish(tp.need); b.done = true; talkBoard(); } }, bye('Bırak')]);
     } else openDialog('İlan tahtası', `${tp.title}: ${b.count}/${tp.need}\n\n${tp.text}`, [bye('Tamam')]);
     return;
   }
   const aliveD = enemies.filter((e) => e.kind === 'draugr' && !e.dead).length;
-  const pool = Object.keys(BOUNTY_TPL).filter((k) => k !== P.lastTpl && (k !== 'draugr' || aliveD >= 3));
+  const pool = Object.keys(BOUNTY_TPL).filter((k) => k !== P.lastTpl && (k !== 'draugr' || aliveD >= 3) && (k !== 'fish' || P.inv.rod));
   const k = pool[Math.floor(Math.random() * pool.length)] || 'wolves', tp = BOUNTY_TPL[k];
   openDialog('İlan tahtası', `${tp.title.toLocaleUpperCase('tr-TR')}\n\n${tp.text}`, [
     { t: 'İlanı al', f: () => { P.bounty = { tpl: k, count: 0, done: false }; if (k === 'wolves') { spawnBountyPack(); toast('Kurt izleri batıda ve kuzeyde'); } closeDialog(); saveGame(); } },
@@ -2290,14 +2528,14 @@ function hitEnemy(e, base, o) {
   showNum(e.pos, dmg, cls, e.def.height * 0.75);
   if (o.melee) addXp('onehand', 0.8 + dmg / 18);
   if (o.rune) addXp('rune', 2.5);
-  const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, d = Math.hypot(dx, dz) || 1, kf = (o.knock || 2) * (e.kind === 'boss' ? 0.12 : 1);
+  const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z, d = Math.hypot(dx, dz) || 1, kf = (o.knock || 2) * (heavyFoe(e) ? 0.12 : 1);
   e.kb.x += (dx / d) * kf; e.kb.z += (dz / d) * kf;
-  if (e.kind === 'boss') { if (o.rune && e.state !== 'slam') e.stagger = 0.4; }
+  if (heavyFoe(e)) { if (o.rune && e.state !== 'slam') e.stagger = 0.4; }
   else if (o.power || o.rune) e.stagger = o.rune ? 1.2 : 0.6;
   else if (e.kind === 'wolf' || (e.state === 'windup' && e.t < e.def.windup * 0.5)) e.stagger = 0.35;
   if (e.state === 'dormant') { e.state = 'rising'; e.t = 0; sfx('draugr'); }
   else if (!isAlerted(e) && e.state !== 'throne') alertEnemy(e);
-  const hc = e.kind === 'wolf' ? 0xc0392b : e.kind === 'boss' ? 0x6fd8c9 : 0xb9c7a8;
+  const hc = e.kind === 'wolf' ? 0xc0392b : e.kind === 'boss' ? 0x6fd8c9 : e.kind === 'troll' ? 0x9fe6ff : 0xb9c7a8;
   emit(e.pos.x, e.pos.y + e.def.height * 0.55, e.pos.z, o.power ? 18 : 10, hc, 4, 0.5, 9, 1.5);
   sfx('hit'); hitstop(o.power ? 0.085 : 0.045); shake(o.power ? 0.22 : 0.08); vibrate(12);
   if (e.hp <= 0) killEnemy(e);
@@ -2312,11 +2550,16 @@ function killEnemy(e) {
     for (const s of enemies) if (s.temp && s.zone === 'dungeon' && !s.dead) { s.hp = 0; killEnemy(s); }
     saveGame();
   }
+  if (e.kind === 'troll') {
+    P.inv.gold += 40; toast('40 altın'); centerMsg('BUZ TROLÜ DEVRİLDİ'); shake(0.45); slamDisc.visible = slamRing.visible = false;
+    if (P.side.ulf >= 1 && P.side.ulf < 4) { P.side.ulf = 4; P.track = 'side'; toast("Yan görev: Ulf'u çöz"); }
+    saveGame();
+  }
   bountyProgress(e.kind);
 }
 function alertEnemy(e) {
   if (e.state === 'dormant') { e.state = 'rising'; e.t = 0; sfx('draugr'); return; }
-  e.state = 'chase'; e.aware = 1.2; e.alertT = 1.6; sfx(e.kind === 'wolf' ? 'wolf' : 'draugr');
+  e.state = 'chase'; e.aware = 1.2; e.alertT = 1.6; sfx(e.kind === 'wolf' ? 'wolf' : e.kind === 'troll' ? 'roar' : 'draugr');
   if (e.pack) for (const o of enemies) if (o !== e && o.pack === e.pack && !o.dead && !isAlerted(o) && o.pos.distanceTo(e.pos) < 14) { o.state = 'chase'; o.aware = 1.2; o.alertT = 1.6; }
 }
 function hurtPlayer(dmg, src, o = {}) {
@@ -2428,7 +2671,8 @@ addEventListener('keydown', (e) => {
     if (c === 'KeyA' || c === 'ArrowLeft') LP.keyL = true; else if (c === 'KeyD' || c === 'ArrowRight') LP.keyR = true;
     else if ((c === 'Space' || c === 'KeyW' || c === 'ArrowUp') && !e.repeat) { LP.turning = true; $('#lpTurn').classList.add('on'); }
     else if (c === 'Escape') closeLock();
-  } else if (state.mode === 'menu') { if (c === 'Escape' || c === 'Tab' || c === 'KeyI') closeMenu(); }
+  } else if (state.mode === 'fishing') { if ((c === 'Space' || c === 'KeyE' || c === 'Enter') && !e.repeat) pullFish(); else if (c === 'Escape') closeFishing(); }
+  else if (state.mode === 'menu') { if (c === 'Escape' || c === 'Tab' || c === 'KeyI') closeMenu(); }
   else if (state.mode === 'levelup') { if (c === 'Escape') closeLevelUp(); else if (['Digit1', 'Digit2', 'Digit3'].includes(c)) pickLevel(['hp', 'st', 'rune'][+c.slice(-1) - 1]); }
 });
 addEventListener('keyup', (e) => {
@@ -2589,13 +2833,13 @@ function updateEnemy(e, dt) {
       if (P.dead) { e.state = 'return'; break; }
       if (e.kind !== 'boss' && e.home.distanceTo(e.pos) > 34 && dist > 10) { e.state = 'return'; e.aware = 0; break; }
       face = toYaw;
-      if (e.kind === 'boss') {
+      if (heavyFoe(e)) {
         e.slamCd -= dt;
-        if (!e.phase2 && e.hp < e.maxHp * 0.5) { e.phase2 = true; e.state = 'roar'; e.t = 0; sfx('roar'); shake(0.5); centerMsg('ÖLÜLER, KALKIN!'); break; }
+        if (e.kind === 'boss' && !e.phase2 && e.hp < e.maxHp * 0.5) { e.phase2 = true; e.state = 'roar'; e.t = 0; sfx('roar'); shake(0.5); centerMsg('ÖLÜLER, KALKIN!'); break; }
         if (e.slamCd <= 0 && dist < 7) { e.state = 'slam'; e.t = 0; e.atkType = 'slam'; e.slamCd = e.phase2 ? 6 : 8.5; break; }
       }
       if (dist > e.def.range * 0.8 + P.r) { target = P.pos; speed = e.def.speed * (e.phase2 ? 1.15 : 1); }
-      if (dist <= e.def.range + 0.2 && e.atkCd <= 0 && e.stagger <= 0 && Math.abs(angDiff(e.yaw, toYaw)) < 0.6) { e.state = 'windup'; e.t = 0; e.atkType = e.kind === 'boss' ? 'heavy' : e.kind === 'draugr' ? (Math.random() < 0.5 ? 'slash' : 'chop') : 'bite'; }
+      if (dist <= e.def.range + 0.2 && e.atkCd <= 0 && e.stagger <= 0 && Math.abs(angDiff(e.yaw, toYaw)) < 0.6) { e.state = 'windup'; e.t = 0; e.atkType = e.kind === 'boss' ? 'heavy' : e.kind === 'troll' ? (Math.random() < 0.5 ? 'heavy' : 'chop') : e.kind === 'draugr' ? (Math.random() < 0.5 ? 'slash' : 'chop') : 'bite'; }
     } break;
     case 'windup':
       e.t += dt; if (e.t < e.def.windup * 0.65) face = toYaw;
@@ -2683,7 +2927,7 @@ function placeEnemy(e, dt) {
   const tele = e.state === 'windup' ? Math.min(1, e.t / e.def.windup) : e.state === 'slam' ? Math.min(1, e.t / SLAM_T) : 0, f = e.flash;
   for (const mt of m.flash) mt.emissive.setRGB(f * 0.8 + tele * 0.55, f * 0.8 + tele * 0.2, f * 0.8 + tele * 0.04);
   const vis = e.zone === state.zone && !e.dead && r.visible;
-  const showBar = vis && e.hp < e.maxHp && e.kind !== 'boss';
+  const showBar = vis && e.hp < e.maxHp && !heavyFoe(e);
   e.bar.bg.visible = e.bar.fill.visible = showBar;
   const top = r.position.y + e.def.height + 0.25;
   if (showBar) { const bxp = e.pos.x - camRight.x * 0.5, bzp = e.pos.z - camRight.z * 0.5; e.bar.bg.position.set(bxp, top, bzp); e.bar.fill.position.set(bxp, top, bzp); e.bar.fill.scale.x = Math.max(0.001, e.hp / e.maxHp); }
@@ -2715,11 +2959,17 @@ function updateHUD() {
   hpFill.style.transform = `scaleX(${clamp(P.hp / P.maxHp, 0, 1)})`; setText(hpNum, String(Math.ceil(P.hp)));
   stFill.style.transform = `scaleX(${clamp(P.st / P.maxSt, 0, 1)})`; setText(stNum, String(Math.floor(P.st)));
   setHidden(lvlBadge, P.pendingLevels <= 0);
-  const ob = objective(); setText(objText, ob.text);
+  const mainOb = objective(), sideOb = sideObjective(), mainActive = P.stage < 6;
+  const trackSide = !!sideOb && (P.track === 'side' || !mainActive);
+  const ob = trackSide ? sideOb : mainOb;
+  setText($('#objTitle'), trackSide ? 'YAN GÖREV · KAYIP BALIKÇI' : 'GÖREV · ATA RÜNÜ'); setText(objText, ob.text);
+  const other = trackSide ? (mainActive ? 'Ana görev: ' + mainOb.text : '') : (sideOb ? 'Yan görev: ' + sideOb.text : '');
+  setHidden($('#objOther'), !other); if (other) setText($('#objOther'), other + ' · değiştirmek için dokun');
+  $('#objCard').classList.toggle('can-toggle', !!sideOb && mainActive);
   let dist = null;
   if (ob.t) dist = Math.hypot(ob.t.x - P.pos.x, ob.t.z - P.pos.z);
   setText(objDist, dist !== null && dist > 4 ? `${Math.round(dist)} m` : '');
-  if (P.bounty) { const tp = BOUNTY_TPL[P.bounty.tpl]; setHidden(bountyHud, false); setText(bountyHud, P.bounty.done ? `İlan: ${tp.title} · ödül tahtada` : P.bounty.tpl === 'herbs' ? `İlan: ${tp.title} · ${Math.min(P.inv.herbs, tp.need)}/${tp.need} çiçek` : `İlan: ${tp.title} · ${P.bounty.count}/${tp.need}`); }
+  if (P.bounty) { const tp = BOUNTY_TPL[P.bounty.tpl]; setHidden(bountyHud, false); setText(bountyHud, P.bounty.done ? `İlan: ${tp.title} · ödül tahtada` : P.bounty.tpl === 'herbs' ? `İlan: ${tp.title} · ${Math.min(P.inv.herbs, tp.need)}/${tp.need} çiçek` : P.bounty.tpl === 'fish' ? `İlan: ${tp.title} · ${Math.min(fishTotal(), tp.need)}/${tp.need} balık` : `İlan: ${tp.title} · ${P.bounty.count}/${tp.need}`); }
   else setHidden(bountyHud, true);
   // hedef işareti
   if (ob.t && ob.t.zone === state.zone && dist > 3.5) {
@@ -2735,8 +2985,8 @@ function updateHUD() {
     } else setHidden(arrowEl, true);
   } else { beacon.visible = false; setHidden(arrowEl, true); }
   // boss
-  const showBoss = state.zone === 'dungeon' && bossState.triggered && !boss.dead;
-  setHidden(bossEl, !showBoss); if (showBoss) bossFill.style.transform = `scaleX(${clamp(boss.hp / boss.maxHp, 0, 1)})`;
+  const big = state.zone === 'dungeon' ? (bossState.triggered && !boss.dead ? boss : null) : (!troll.dead && isAlerted(troll) ? troll : null);
+  setHidden(bossEl, !big); if (big) { setText($('#bossName'), big.def.name); bossFill.style.transform = `scaleX(${clamp(big.hp / big.maxHp, 0, 1)})`; }
   // gizlilik
   if (P.sneaking) {
     let aw = 0, alerted = false;
@@ -2799,12 +3049,13 @@ function renderMenu() {
     const ml = $('#mLevel'); if (ml) ml.addEventListener('click', () => { closeMenu(); openLevelUp(); });
   } else if (menuTab === 'inv') {
     const dmg = Math.round((10 + P.inv.weaponBonus) * (1 + (P.skills.onehand.lvl - 15) * 0.04));
-    b.innerHTML = `<dl class="kv"><dt>Silah</dt><dd>${P.inv.sword} · ${dmg} hasar</dd><dt>Altın</dt><dd>${P.inv.gold}</dd><dt>Şifa iksiri</dt><dd>${P.inv.potions}</dd><dt>Maymuncuk</dt><dd>${P.inv.picks}</dd><dt>Kar çiçeği</dt><dd>${P.inv.herbs}</dd><dt>Kurt postu</dt><dd>${P.inv.pelts}</dd>${P.inv.rune ? '<dt>Görev eşyası</dt><dd style="color:var(--rune)">Ata Rünü</dd>' : ''}</dl>`;
+    b.innerHTML = `<dl class="kv"><dt>Silah</dt><dd>${P.inv.sword} · ${dmg} hasar</dd><dt>Altın</dt><dd>${P.inv.gold}</dd><dt>Şifa iksiri</dt><dd>${P.inv.potions}</dd><dt>Maymuncuk</dt><dd>${P.inv.picks}</dd><dt>Kar çiçeği</dt><dd>${P.inv.herbs}</dd><dt>Kurt postu</dt><dd>${P.inv.pelts}</dd><dt>Balık</dt><dd>${fishTotal()} · ${fishValue()} altın değerinde</dd>${P.inv.rod ? '<dt>Alet</dt><dd>Olta</dd>' : ''}${P.inv.rune ? '<dt>Görev eşyası</dt><dd style="color:var(--rune)">Ata Rünü</dd>' : ''}</dl>`;
   } else if (menuTab === 'quest') {
     const steps = ["Isvik'te Sigrun ile konuş", "Ata Höyüğü'ne git", 'Höyüğün derinliklerine in', "Höyük Kralı'nı yen, Ata Rünü'nü al", 'Höyükten çık', "Rünü Sigrun'a götür"];
     const idx = [0, 1, 2, 3, 4, 5, 5][Math.min(P.stage, 6)];
     b.innerHTML = `<div class="qs"><h3>Ata Rünü</h3>${steps.map((s, i) => `<div class="${i < idx || P.stage >= 6 ? 'done' : ''}">${i === idx && P.stage < 6 ? '▸ ' : ''}${s}</div>`).join('')}</div>` +
-      `<div class="qs" style="margin-top:16px"><h3>İlan tahtası</h3>${P.bounty ? `${BOUNTY_TPL[P.bounty.tpl].title} · ${P.bounty.done ? 'tamamlandı, ödül tahtada' : P.bounty.tpl === 'herbs' ? `${Math.min(P.inv.herbs, 4)}/4 çiçek` : `${P.bounty.count}/${BOUNTY_TPL[P.bounty.tpl].need}`}` : 'Aktif ilan yok. Köydeki tahtadan yeni iş alabilirsin; her seferinde farklı bir iş çıkar.'}</div>`;
+      (P.side.ulf > 0 ? `<div class="qs" style="margin-top:16px"><h3>Kayıp Balıkçı</h3>${["Kuzgun Gölü'ndeki kampa git", 'Trol izlerini takip et', "Buz Trolü'nü yen", "Ulf'u çöz", "Hakon'a haber ver"].map((st, i) => `<div class="${i + 1 < P.side.ulf ? 'done' : ''}">${i + 1 === P.side.ulf ? '▸ ' : ''}${st}</div>`).join('')}</div>` : '') +
+      `<div class="qs" style="margin-top:16px"><h3>İlan tahtası</h3>${P.bounty ? `${BOUNTY_TPL[P.bounty.tpl].title} · ${P.bounty.done ? 'tamamlandı, ödül tahtada' : P.bounty.tpl === 'herbs' ? `${Math.min(P.inv.herbs, 4)}/4 çiçek` : P.bounty.tpl === 'fish' ? `${Math.min(fishTotal(), 3)}/3 balık` : `${P.bounty.count}/${BOUNTY_TPL[P.bounty.tpl].need}`}` : 'Aktif ilan yok. Köydeki tahtadan yeni iş alabilirsin; her seferinde farklı bir iş çıkar.'}</div>`;
   } else {
     b.innerHTML = `<div class="set"><span>Ses</span><div class="seg"><button data-snd="1" aria-pressed="${!prefs.muted}">Açık</button><button data-snd="0" aria-pressed="${prefs.muted}">Kapalı</button></div></div>
       <div class="set"><span>Grafik</span><div class="seg">${[['auto', 'Otomatik'], ['low', 'Düşük'], ['medium', 'Orta'], ['high', 'Yüksek']].map(([k, l]) => `<button data-gfx="${k}" aria-pressed="${prefs.gfx === k}">${l}</button>`).join('')}</div></div>
@@ -2841,7 +3092,7 @@ function makeSave() {
     v: 1, zone: state.zone, pos: [P.pos.x, P.pos.z], yaw: P.yaw, hp: P.hp, maxHp: P.maxHp, st: P.st, maxSt: P.maxSt, runeMult: P.runeMult, runeCdMax: P.runeCdMax,
     skills: P.skills, charLvl: P.charLvl, charXp: P.charXp, pending: P.pendingLevels, inv: P.inv, stage: P.stage, stats: P.stats, bounty: P.bounty, lastTpl: P.lastTpl,
     dead: enemies.filter((e) => e.dead && !e.temp).map((e) => e.id), opened: [...state.opened], gates: { g1: gates.g1.open, g2: gates.g2.open },
-    rune: [runePickup.x, runePickup.z], seen: [...state.seen],
+    rune: [runePickup.x, runePickup.z], seen: [...state.seen], side: P.side, track: P.track,
   };
 }
 function saveGame(silent) {
@@ -2859,6 +3110,7 @@ function applySave(s) {
   if (s.rune) { runePickup.x = s.rune[0]; runePickup.z = s.rune[1]; runePickup.mesh.position.set(s.rune[0], 0, s.rune[1]); }
   if (boss.dead) { bossState.triggered = true; if (P.stage === 3 && !state.opened.has('rune')) runePickup.mesh.visible = true; }
   (s.seen || []).forEach((x) => state.seen.add(x));
+  if (s.side) P.side = Object.assign({ ulf: 0 }, s.side); P.track = s.track || 'main'; syncUlf();
   placeAt(s.zone, s.pos[0], s.pos[1], s.yaw);
   if (P.hp <= 0) P.hp = P.maxHp * 0.5;
   if (P.bounty && P.bounty.tpl === 'wolves' && !P.bounty.done) spawnBountyPack();
@@ -2922,6 +3174,9 @@ function frame(now) {
       updateFlow();
       if (!bossState.triggered && !boss.dead && P.pos.x > DX + 31 && P.pos.z > 24) { bossState.triggered = true; showBanner('Höyük Kralı', 'MEZARIN SAHİBİ'); }
     } else {
+      if (!state.seen.has('lake') && lakeE(P.pos.x, P.pos.z) < 1.6) { state.seen.add('lake'); showBanner('Kuzgun Gölü', 'YENİ YER'); }
+      if (!state.seen.has('lair') && Math.hypot(P.pos.x - LAIR.x, P.pos.z - LAIR.z) < 16) { state.seen.add('lair'); showBanner('Trol İni', 'YENİ YER'); }
+      sideTriggers();
       if (!state.seen.has('ruin') && Math.hypot(P.pos.x - RUIN.x, P.pos.z - RUIN.z) < 14) { state.seen.add('ruin'); showBanner('Unutulmuş Taşlar', 'YENİ YER'); }
       if (!state.seen.has('isvik') && Math.hypot(P.pos.x, P.pos.z) < 20) { state.seen.add('isvik'); showBanner('Isvik', 'KUZEY KIYISI'); }
     }
@@ -2931,7 +3186,7 @@ function frame(now) {
     for (const e of enemies) {
       if (e.dead || e.zone !== state.zone || e.state === 'dormant' || e.state === 'throne') continue;
       const dx = P.pos.x - e.pos.x, dz = P.pos.z - e.pos.z, d = Math.hypot(dx, dz), mn = P.r + e.def.r;
-      if (d < mn && d > 1e-4) { const ov = mn - d, wP = e.kind === 'boss' ? 1 : 0.35; P.pos.x += (dx / d) * ov * wP; P.pos.z += (dz / d) * ov * wP; e.pos.x -= (dx / d) * ov * (1 - wP); e.pos.z -= (dz / d) * ov * (1 - wP); }
+      if (d < mn && d > 1e-4) { const ov = mn - d, wP = heavyFoe(e) ? 1 : 0.35; P.pos.x += (dx / d) * ov * wP; P.pos.z += (dz / d) * ov * wP; e.pos.x -= (dx / d) * ov * (1 - wP); e.pos.z -= (dz / d) * ov * (1 - wP); }
       for (const o of enemies) {
         if (o === e || o.dead || o.zone !== e.zone || o.state === 'dormant' || o.state === 'throne') continue;
         const ex = e.pos.x - o.pos.x, ez = e.pos.z - o.pos.z, ed = Math.hypot(ex, ez), em = e.def.r + o.def.r;
@@ -2947,6 +3202,8 @@ function frame(now) {
     state.autosaveT += raw; if (state.autosaveT > 25) { state.autosaveT = 0; saveGame(true); }
   } else if (state.mode === 'lockpick') {
     updateLock(raw);
+  } else if (state.mode === 'fishing') {
+    updateFishing(raw);
   }
   // kar
   if (state.zone === 'world') {
@@ -2963,12 +3220,12 @@ function frame(now) {
   skyGroup.position.copy(camera.position);
   if (state.zone === 'world') { sun.position.copy(P.pos).add(SUN_OFF); sun.target.position.copy(P.pos); }
   updateParts(raw); updateFx(raw);
-  if (state.zone === 'world') { updateSmoke(raw); updateMist(); } else { updateDust(raw); for (const s of shafts) s.material.uniforms.t.value = state.time; }
+  if (state.zone === 'world') { updateSmoke(raw); updateMist(); updateRavens(); } else { updateDust(raw); for (const s of shafts) s.material.uniforms.t.value = state.time; }
   updateBlobs();
   state.emberT = (state.emberT || 0) - raw;
   if (state.emberT <= 0 && !LOW) {
     state.emberT = 0.09;
-    for (const f of fireSpots) { if (f.zone !== state.zone) continue; f.obj.getWorldPosition(emberV); if (emberV.distanceTo(camera.position) > 50) continue; emit(emberV.x + (Math.random() - 0.5) * 0.4 * f.scale, emberV.y + 0.9 * f.scale, emberV.z + (Math.random() - 0.5) * 0.4 * f.scale, 1, 0xffa040, 0.5, 1.6, -1.2, 0.6); }
+    for (const f of fireSpots) { if (f.zone !== state.zone || !f.obj.visible) continue; f.obj.getWorldPosition(emberV); if (emberV.distanceTo(camera.position) > 50) continue; emit(emberV.x + (Math.random() - 0.5) * 0.4 * f.scale, emberV.y + 0.9 * f.scale, emberV.z + (Math.random() - 0.5) * 0.4 * f.scale, 1, 0xffa040, 0.5, 1.6, -1.2, 0.6); }
   }
   if (state.mode !== 'title' && state.mode !== 'boot') { updateHUD(); updateNums(raw); }
   if (composer) { gradePass.uniforms.time.value = state.time % 100; gradePass.uniforms.dungeon.value = state.zone === 'dungeon' ? 1 : 0; composer.render(raw); }
