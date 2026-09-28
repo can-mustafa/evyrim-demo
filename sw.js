@@ -1,47 +1,40 @@
-/* Evyrim service worker: oyun dosyalarını ve 3D motoru önbelleğe alır, internetsiz de açılır. */
-const CACHE = 'evyrim-02ed7e4ca2';
-const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
-const CDN = [
-  "https://cdn.jsdelivr.net/npm/three@0.170.0/+esm",
-  "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/postprocessing/EffectComposer.js/+esm",
-  "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/postprocessing/RenderPass.js/+esm",
-  "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/postprocessing/UnrealBloomPass.js/+esm",
-  "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/postprocessing/ShaderPass.js/+esm",
-  "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/postprocessing/OutputPass.js/+esm"
+/* Evyrim service worker: oyunun bütün dosyalarını önbelleğe alır, internetsiz de açılır. */
+const CACHE = 'evyrim-e4480b0fa6';
+const CORE = [
+  "./",
+  "./assets/5aUu9_-1phKLFgshYDvh6Vwt5alOqER2i0VBuxOCBA-D7CJMOM7.woff2",
+  "./assets/5aUu9_-1phKLFgshYDvh6Vwt5alOqEp2i0VBuxM-DqiCFOjO.woff2",
+  "./assets/5aUu9_-1phKLFgshYDvh6Vwt5eFIqER2i0VBuxOCBA-BFZFlHQM.woff2",
+  "./assets/5aUu9_-1phKLFgshYDvh6Vwt5eFIqEp2i0VBuxM-wtMREkJN.woff2",
+  "./assets/5aUz9_-1phKLFgshYDvh6Vwt7VRtvWdUhm97sg-hZMqAcaJ.woff2",
+  "./assets/5aUz9_-1phKLFgshYDvh6Vwt7VptvWdUhm8-CUl-7pZ6.woff2",
+  "./assets/Fh4sPjjqNDz1osh_jX9YfjudpDhDHa-IeLT4vlk-Bz4axfir.woff2",
+  "./assets/Fh4sPjjqNDz1osh_jX9YfjudpDhNHa-IeLT4-C-WeIWFL.woff2",
+  "./assets/O4ZTFGb7hR12BxqH-GImuA8alw-BbeXw2cv.woff2",
+  "./assets/O4ZTFGb7hR12BxqH9mImuA8al1md-C4gCCFNM.woff2",
+  "./assets/index-BpOJjLqg.css",
+  "./assets/index-CzI8O_yc.js",
+  "./icons/apple-touch-icon.png",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/icon-maskable-512.png",
+  "./index.html",
+  "./manifest.webmanifest"
 ];
-const CACHEABLE_HOSTS = ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil((async () => {
-    const c = await caches.open(CACHE);
-    await c.addAll(CORE);
-    await Promise.all(CDN.map((u) => c.add(new Request(u, { mode: 'cors' })).catch(() => {})));
-    await self.skipWaiting();
-  })());
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)).then(() => self.skipWaiting()));
 });
-
 self.addEventListener('activate', (e) => {
-  e.waitUntil((async () => {
-    for (const k of await caches.keys()) if (k !== CACHE) await caches.delete(k);
-    await self.clients.claim();
-  })());
+  e.waitUntil((async () => { for (const k of await caches.keys()) if (k !== CACHE) await caches.delete(k); await self.clients.claim(); })());
 });
-
 self.addEventListener('fetch', (e) => {
   const req = e.request;
-  if (req.method !== 'GET') return;
-  const url = new URL(req.url);
-  // Sayfanın kendisi: önce ağ (güncellemeler hemen gelsin), ağ yoksa önbellek
+  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put('./index.html', copy)); return r; })
-      .catch(() => caches.match('./index.html')));
+    // sayfa: önce ağ (güncellemeler hemen gelsin), ağ yoksa önbellek
+    e.respondWith(fetch(req).then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put('./index.html', copy)); return r; }).catch(() => caches.match('./index.html')));
     return;
   }
-  // Sürümü sabit dosyalar (ikonlar, three.js, fontlar): önce önbellek
-  if (url.origin === location.origin || CACHEABLE_HOSTS.includes(url.host)) {
-    e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((r) => {
-      if (r.ok || r.type === 'opaque') { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
-      return r;
-    })));
-  }
+  e.respondWith(caches.match(req).then((hit) => hit || fetch(req)));
 });
