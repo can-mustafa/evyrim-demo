@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="description" content="Evyrim: Ata Höyüğü, İskandinav temalı açık dünya RPG demosu. Telefonda ve bilgisayarda tarayıcıda oynanır.">
 <meta name="theme-color" content="#0a1019">
 <meta name="mobile-web-app-capable" content="yes">
@@ -27,6 +27,10 @@
 html,body{height:100%;margin:0;background:var(--night);overflow:hidden}
 [hidden]{display:none!important}
 #title,.card,#dialog{touch-action:pan-y}
+html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#app button,.ch,.opt,.tab,.btn,.ic{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#touch,.tb,#tInteract,#lpCanvas,#lpTurn{touch-action:none}
+.arming button,.arming canvas{pointer-events:none!important}
 #app{position:fixed;inset:0;overflow:hidden;font-family:var(--body);color:var(--frost);-webkit-user-select:none;user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;background:var(--night)}
 #c{position:absolute;inset:0;width:100%;height:100%;display:block;outline:none}
 button{font:inherit;color:inherit;cursor:pointer}
@@ -326,6 +330,15 @@ kbd{font:600 11px/1 var(--head);letter-spacing:.06em;padding:3px 6px;border:1px 
 </div>
 
 <script>
+/* Mobil: çift dokunmada ve iki parmakla yakınlaştırmayı engelle (Safari viewport ayarını yok sayar) */
+(function(){
+  var last = 0;
+  document.addEventListener('touchend', function(e){ var now = Date.now(); if (now - last < 350 && e.cancelable) e.preventDefault(); last = now; }, { passive: false });
+  document.addEventListener('dblclick', function(e){ e.preventDefault(); }, { passive: false });
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(function(t){ document.addEventListener(t, function(e){ e.preventDefault(); }, { passive: false }); });
+  document.addEventListener('touchmove', function(e){ if (e.scale !== undefined && e.scale !== 1 && e.cancelable) e.preventDefault(); }, { passive: false });
+  document.addEventListener('contextmenu', function(e){ if (e.target && e.target.closest && e.target.closest('#app')) e.preventDefault(); });
+})();
 window.addEventListener('error', function(e){ if(!window.__ataReady && e && e.message){ var b=document.querySelector('#boot p'); if(b) b.textContent='Demo başlatılamadı: ' + e.message; } });
 setTimeout(function(){ if(!window.__ataReady){ var b=document.querySelector('#boot p'); if(b) b.textContent='3D motoru yüklenemedi. İnternet bağlantısını kontrol edip sayfayı yenile.'; } }, 15000);
 </script>
@@ -2071,7 +2084,7 @@ function openDialog(who, text, choices) {
     b.addEventListener('click', () => { if (!c.dis) { sfx('ui'); c.f(); } });
     dlgChoices.appendChild(b);
   });
-  dlg.hidden = false; syncOverlays();
+  dlg.hidden = false; arm(dlg); syncOverlays();
   const first = dlgChoices.querySelector('button:not([disabled])'); if (first && !IS_TOUCH) first.focus({ preventScroll: true });
 }
 function closeDialog() { dlg.hidden = true; state.mode = 'play'; syncOverlays(); }
@@ -2162,7 +2175,7 @@ function openLock(c) {
   LP.tol = (c.hard ? 0.075 : 0.2) + (P.skills.lock.lvl - 15) * 0.006; LP.pick = 0; LP.turn = 0; LP.strain = 0; LP.turning = false;
   $('#lpTitle').textContent = c.hard ? 'Rünlü kilit · zor' : 'Rünlü kilit · kolay';
   $('#lpHelp').textContent = IS_TOUCH ? 'Kilidin üstünde parmağını kaydırarak maymuncuğu gezdir. Sonra “Çevir”e basılı tut. Kilit direnirse bırak, açıyı değiştir.' : 'Fareyle sürükle ya da A/D ile maymuncuğu gezdir. Boşluk veya W basılıyken kilit döner. Kilit direnirse bırak, açıyı değiştir.';
-  $('#lpMsg').textContent = ''; sizeLp(); state.mode = 'lockpick'; releaseInputs(); lpEl.hidden = false; syncOverlays();
+  $('#lpMsg').textContent = ''; sizeLp(); state.mode = 'lockpick'; releaseInputs(); lpEl.hidden = false; arm(lpEl); syncOverlays();
 }
 function closeLock() { lpEl.hidden = true; LP.turning = false; $('#lpTurn').classList.remove('on'); state.mode = 'play'; syncOverlays(); }
 function updateLock(dt) {
@@ -2324,7 +2337,7 @@ function hurtPlayer(dmg, src, o = {}) {
 }
 function playerDie() {
   P.dead = true; P.deadT = 0; P.atk = null; P.dodge = null; P.stats.deaths++; sfx('death');
-  setTimeout(() => { if (P.dead) { state.mode = 'dead'; $('#dead').hidden = false; syncOverlays(); if (input.locked) document.exitPointerLock?.(); } }, 1400);
+  setTimeout(() => { if (P.dead) { state.mode = 'dead'; $('#dead').hidden = false; arm($('#dead')); syncOverlays(); if (input.locked) document.exitPointerLock?.(); } }, 1400);
 }
 function respawn() {
   $('#dead').hidden = true; P.dead = false; P.hp = P.maxHp; P.st = P.maxSt; P.runeCd = 0; P.kb.set(0, 0, 0); P.model.root.rotation.x = 0; P.stagger = 0;
@@ -2687,6 +2700,8 @@ const hudEl = $('#hud'), hpFill = $('#hpFill'), stFill = $('#stFill'), hpNum = $
 const objText = $('#objText'), objDist = $('#objDist'), bountyHud = $('#bountyHud'), bossEl = $('#boss'), bossFill = $('#bossFill');
 const stealthEl = $('#stealth'), stealthTxt = $('#stealthTxt'), eyeOpen = $('#eyeOpen'), promptEl = $('#prompt'), promptTxt = $('#promptTxt');
 const arrowEl = $('#arrow'), fpsEl = $('#fps'), hurtEl = $('#hurt'), lvlBadge = $('#lvlBadge'), tInteract = $('#tInteract'), tInteractTxt = $('#tInteractTxt');
+/* Açılış koruması: ekranı açan dokunuşun ikinci vuruşu bir seçeneği yanlışlıkla seçmesin */
+function arm(el) { el.classList.add('arming'); clearTimeout(el._armT); el._armT = setTimeout(() => el.classList.remove('arming'), 300); }
 function toast(t, cls = '') {
   const el = document.createElement('div'); el.className = 'toast ' + cls; el.textContent = t; $('#toasts').appendChild(el);
   setTimeout(() => el.remove(), 3300); const all = $('#toasts').children; if (all.length > 5) all[0].remove();
@@ -2758,7 +2773,7 @@ function checkOrientation() { setHidden($('#rotHint'), !(IS_TOUCH && prefs.rotHi
 $('#rotClose').addEventListener('click', () => { prefs.rotHint = false; savePrefs(); checkOrientation(); });
 
 /* ---------- seviye atlama */
-function openLevelUp() { if (P.pendingLevels <= 0 || state.mode !== 'play') return; if (input.locked) document.exitPointerLock?.(); state.mode = 'levelup'; releaseInputs(); $('#luLvl').textContent = P.charLvl + 1; $('#levelup').hidden = false; syncOverlays(); if (!IS_TOUCH) $('#levelup .opt').focus({ preventScroll: true }); }
+function openLevelUp() { if (P.pendingLevels <= 0 || state.mode !== 'play') return; if (input.locked) document.exitPointerLock?.(); state.mode = 'levelup'; releaseInputs(); $('#luLvl').textContent = P.charLvl + 1; $('#levelup').hidden = false; arm($('#levelup')); syncOverlays(); if (!IS_TOUCH) $('#levelup .opt').focus({ preventScroll: true }); }
 function closeLevelUp() { $('#levelup').hidden = true; state.mode = 'play'; syncOverlays(); }
 function pickLevel(k) { applyLevel(k); sfx('level'); closeLevelUp(); saveGame(); }
 document.querySelectorAll('#levelup .opt').forEach((b) => b.addEventListener('click', () => pickLevel(b.dataset.lu)));
@@ -2769,7 +2784,7 @@ let menuTab = 'char', resetArm = false;
 function openMenu(tab) {
   if (state.mode !== 'play') return; if (input.locked) document.exitPointerLock?.();
   state.mode = 'menu'; releaseInputs(); if (tab) menuTab = tab; resetArm = false; $('#mReset').textContent = 'Yeni oyun';
-  renderMenu(); $('#menu').hidden = false; syncOverlays();
+  renderMenu(); $('#menu').hidden = false; arm($('#menu')); syncOverlays();
 }
 function closeMenu() { $('#menu').hidden = true; state.mode = 'play'; syncOverlays(); }
 function renderMenu() {
@@ -2813,7 +2828,7 @@ function showVictory() {
   if (input.locked) document.exitPointerLock?.();
   const m = Math.floor(P.stats.time / 60), s = Math.floor(P.stats.time % 60);
   $('#vStats').innerHTML = [[`${m}:${String(s).padStart(2, '0')}`, 'SÜRE'], [P.stats.kills, 'YENİLEN'], [P.stats.sneakAtk, 'GİZLİ SALDIRI'], [P.charLvl, 'SEVİYE'], [P.inv.gold, 'ALTIN']].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
-  state.mode = 'victory'; releaseInputs(); $('#victory').hidden = false; syncOverlays();
+  state.mode = 'victory'; releaseInputs(); $('#victory').hidden = false; arm($('#victory')); syncOverlays();
 }
 $('#vFree').addEventListener('click', () => { $('#victory').hidden = true; state.mode = 'play'; syncOverlays(); });
 $('#vNew').addEventListener('click', () => { store.del(SAVE_KEY); location.reload(); });
