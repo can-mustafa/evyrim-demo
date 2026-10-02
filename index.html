@@ -14,8 +14,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <script type="module" crossorigin src="./assets/index-DacgQVrB.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-BZ9LVxig.css">
+  <script type="module" crossorigin src="./assets/index-D5_nZo57.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Cmr6xQ7A.css">
 </head>
 <body>
 <div id="app">
@@ -47,9 +47,11 @@
       <div class="chip" id="chipRune"><kbd>R</kbd><span>Rün</span></div>
       <div class="chip" id="chipPot"><kbd>Q</kbd><span>İksir ×1</span></div>
       <div class="chip" id="chipLock"><kbd>T</kbd><span>Kilitlen</span></div>
+      <div class="chip" id="chipBow" hidden><kbd>V</kbd><span>Yay</span></div>
       <div class="chip" id="chipSneak"><kbd>C</kbd><span>Gizlen</span></div>
     </div>
     <div id="fps" hidden></div>
+    <div id="aimDot" hidden></div>
   </div>
 
   <div id="touch" hidden>
@@ -63,6 +65,7 @@
     <button class="tb" id="tSneak" aria-label="Gizlen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12.5c3-4.5 15-4.5 18 0"/><path d="M6 15.5l-1.5 2M12 16.5v2.5M18 15.5l1.5 2"/></svg></button>
     <button class="tb" id="tPotion" aria-label="Şifa iksiri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4M10.5 3v5L6 16a3.5 3.5 0 0 0 3 5h6a3.5 3.5 0 0 0 3-5l-4.5-8V3"/><path d="M8 15h8"/></svg><em id="potCount">1</em></button>
     <button id="tInteract" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v5M11 11V4.5a1.5 1.5 0 0 1 3 0V11M14 11V6.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-4a1.5 1.5 0 0 1 2.5-1.5L8 13"/></svg><span id="tInteractTxt"></span></button>
+    <button class="tb" id="tBow" aria-label="Yay: basılı tut, ger; bırak, at" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5c7 2.5 7 14.5 0 17"/><path d="M6 3.5v17"/><path d="M4 12h15M16.5 9.5 19 12l-2.5 2.5"/></svg><em id="arrowCount">0</em></button>
     <button class="tb" id="tLock" aria-label="Hedefe kilitlen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 2.5v3.5M12 18v3.5M2.5 12H6M18 12h3.5"/></svg></button>
     </div>
   </div>
