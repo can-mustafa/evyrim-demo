@@ -1,5 +1,5 @@
 /* Evyrim service worker: oyunun bütün dosyalarını önbelleğe alır, internetsiz de açılır. */
-const CACHE = 'evyrim-a1121c44ff';
+const CACHE = 'evyrim-f3f1528be9';
 const CORE = [
   "./",
   "./assets/5aUu9_-1phKLFgshYDvh6Vwt5alOqER2i0VBuxOCBA-D7CJMOM7.woff2",
@@ -12,7 +12,7 @@ const CORE = [
   "./assets/Fh4sPjjqNDz1osh_jX9YfjudpDhNHa-IeLT4-C-WeIWFL.woff2",
   "./assets/O4ZTFGb7hR12BxqH-GImuA8alw-BbeXw2cv.woff2",
   "./assets/O4ZTFGb7hR12BxqH9mImuA8al1md-C4gCCFNM.woff2",
-  "./assets/index-H8D5p1GN.js",
+  "./assets/index-CTxgQepz.js",
   "./assets/index-gfkpTjd-.css",
   "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
