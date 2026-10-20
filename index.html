@@ -14,8 +14,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <script type="module" crossorigin src="./assets/index-BpjanS_A.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CC_7yI3U.css">
+  <script type="module" crossorigin src="./assets/index-BaZ1sOdG.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-D2uboshJ.css">
 </head>
 <body>
 <div id="app">
@@ -31,8 +31,9 @@
       <div id="clock"></div>
       <button id="lvlBadge" hidden>Seviye atladın · seç</button>
     </div>
-    <div class="obj" id="objCard"><small id="objTitle">GÖREV · ATA RÜNÜ</small><b id="objText"></b><span id="objDist"></span><span id="objOther" hidden></span><span id="bountyHud" hidden></span></div>
+    <div class="obj" id="objCard"><div id="compass" aria-hidden="true"><i class="cd n">K</i><i class="cd">D</i><i class="cd">G</i><i class="cd">B</i></div><small id="objTitle">GÖREV · ATA RÜNÜ</small><b id="objText"></b><span id="objDist"></span><span id="objOther" hidden></span><span id="bountyHud" hidden></span></div>
     <div class="tr">
+      <button class="ic" id="btnRaven" aria-label="Kuzgunu sal" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9c3 .2 5.3 1.6 7 4 .6-3.2 2.4-5.6 5.4-7-.3 2.3.2 4.1 1.6 5.5l4.5-.8-3.2 3c-1.2 3-4 4.8-7.6 4.8L8 21l-.6-3.3C5 16.4 3.4 13.6 2.5 9z"/><circle cx="17.6" cy="12.4" r=".6" fill="currentColor"/></svg></button>
       <button class="ic" id="btnSound" aria-label="Sesi aç veya kapat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5v14l-4.5-4.5H4z"/><path id="sndWave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
       <button class="ic" id="btnMenu" aria-label="Menü"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
     </div>
@@ -51,6 +52,7 @@
       <div class="chip" id="chipPot"><kbd>Q</kbd><span>İksir ×1</span></div>
       <div class="chip" id="chipLock"><kbd>T</kbd><span>Kilitlen</span></div>
       <div class="chip" id="chipBow" hidden><kbd>V</kbd><span>Yay</span></div>
+      <div class="chip" id="chipRaven" hidden><kbd>G</kbd><span>Kuzgun</span></div>
       <div class="chip" id="chipSneak"><kbd>C</kbd><span>Gizlen</span></div>
     </div>
     <div id="fps" hidden></div>
@@ -71,6 +73,10 @@
     <button class="tb" id="tBow" aria-label="Yay: basılı tut, ger; bırak, at" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5c7 2.5 7 14.5 0 17"/><path d="M6 3.5v17"/><path d="M4 12h15M16.5 9.5 19 12l-2.5 2.5"/></svg><em id="arrowCount">0</em></button>
     <button class="tb" id="tLock" aria-label="Hedefe kilitlen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 2.5v3.5M12 18v3.5M2.5 12H6M18 12h3.5"/></svg></button>
     </div>
+  </div>
+
+  <div id="hudEdit" hidden>
+    <div class="hebar"><span id="heMsg"></span><button class="btn small" id="heReset">Sıfırla</button><button class="btn small primary" id="heDone">Bitti</button></div>
   </div>
 
   <div id="title" class="screen" hidden>
